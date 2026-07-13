@@ -110,8 +110,22 @@ supabase/migrations/      DB 스키마 + RLS + Storage 정책
 
 ---
 
-## 배포 (선택)
+## Vercel 배포
 
-Vercel에 GitHub 저장소를 연결하고, 환경변수 두 개(`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`)를
-넣으면 끝입니다. 배포 후 Supabase 대시보드 → **Authentication → URL Configuration** 의
-*Site URL* 과 *Redirect URLs* 에 배포 주소를 추가하세요.
+`.env.local` 은 git에 올라가지 않으므로 **Vercel에 환경변수를 따로 넣어야 합니다.**
+안 넣으면 미들웨어가 시작하자마자 죽어 `MIDDLEWARE_INVOCATION_FAILED` 500 이 뜹니다.
+
+1. Vercel 프로젝트 → **Settings → Environment Variables** 에 두 개 추가
+   (Production / Preview / Development 전부 체크)
+
+   ```
+   NEXT_PUBLIC_SUPABASE_URL       = https://nfwthowdcyciorqabiae.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY  = <anon / public key>
+   ```
+
+2. **Deployments → 최신 배포 → Redeploy.**
+   `NEXT_PUBLIC_` 변수는 빌드할 때 코드에 박히므로, 값을 넣은 뒤 **반드시 다시 빌드해야** 반영됩니다.
+
+3. Supabase 대시보드 → **Authentication → URL Configuration** 의
+   *Site URL* 과 *Redirect URLs* 에 배포 주소(`https://pdflinkin.vercel.app`)를 추가.
+   (이메일 확인을 끄지 않았다면 확인 메일의 링크가 여기로 돌아옵니다.)

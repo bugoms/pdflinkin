@@ -7,6 +7,24 @@ import { createClient } from "@/lib/supabase/client";
 
 type Mode = "signin" | "signup";
 
+/** Supabase 의 영문 오류를 사람이 읽을 수 있게 바꾼다. */
+function translate(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("email not confirmed")) {
+    return "이메일 확인이 아직 안 됐습니다. 받은 메일의 링크를 누르거나, Supabase 대시보드 → Authentication → Email 에서 'Confirm email' 을 끄세요.";
+  }
+  if (m.includes("invalid login credentials")) {
+    return "이메일 또는 비밀번호가 맞지 않습니다.";
+  }
+  if (m.includes("already registered") || m.includes("already been registered")) {
+    return "이미 가입된 이메일입니다. 로그인해 주세요.";
+  }
+  if (m.includes("password")) {
+    return "비밀번호는 6자 이상이어야 합니다.";
+  }
+  return message;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
@@ -31,7 +49,7 @@ export default function LoginPage() {
         options: { emailRedirectTo: `${location.origin}/auth/callback` },
       });
       if (error) {
-        setError(error.message);
+        setError(translate(error.message));
       } else if (data.session) {
         router.replace("/board");
         router.refresh();
@@ -45,7 +63,7 @@ export default function LoginPage() {
         password,
       });
       if (error) {
-        setError(error.message);
+        setError(translate(error.message));
       } else {
         router.replace("/board");
         router.refresh();
