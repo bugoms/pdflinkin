@@ -1,0 +1,97 @@
+@import "tailwindcss";
+@import "@xyflow/react/dist/style.css";
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    "Pretendard",
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   React Flow 다크 테마 오버라이드
+   --------------------------------------------------------------------------- */
+
+.react-flow {
+  --xy-background-color: #0a0a0a;
+  --xy-edge-stroke-default: #52525b;
+  --xy-edge-stroke-selected-default: #a1a1aa;
+  --xy-connectionline-stroke-default: #a1a1aa;
+}
+
+/* 기본 노드 껍데기를 없애고 카드가 직접 그리게 한다 */
+.react-flow__node {
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  width: auto;
+  font-size: inherit;
+  color: inherit;
+}
+
+.react-flow__node.selected .card-shell {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.react-flow__handle {
+  width: 9px;
+  height: 9px;
+  border: 2px solid #0a0a0a;
+  background: #71717a;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.react-flow__node:hover .react-flow__handle,
+.react-flow__node.selected .react-flow__handle {
+  opacity: 1;
+}
+
+.react-flow__handle:hover {
+  background: #38bdf8;
+}
+
+.react-flow__attribution {
+  display: none;
+}
+
+.react-flow__controls-button {
+  background: #171717;
+  border-bottom: 1px solid #262626;
+  fill: #d4d4d4;
+}
+
+.react-flow__controls-button:hover {
+  background: #262626;
+}
+
+.react-flow__minimap {
+  background-color: #0f0f0f;
+}
+
+.react-flow__resize-control.handle {
+  background: #38bdf8;
+  border: 1px solid #0a0a0a;
+  border-radius: 2px;
+  width: 8px;
+  height: 8px;
+}
+
+.react-flow__resize-control.line {
+  border-color: transparent;
+}
+
+/* 스크롤바 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 transparent;
+}
