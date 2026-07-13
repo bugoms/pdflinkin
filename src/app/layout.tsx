@@ -26,8 +26,13 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko" className={`h-full ${inter.variable}`}>
-      <body className="h-full overscroll-none bg-canvas text-ink antialiased">
+    // suppressHydrationWarning: 브라우저 확장이 <html>/<body> 에 속성을 끼워 넣어
+    // 생기는 가짜 hydration 경고만 막는다. 자식 요소의 진짜 불일치는 여전히 잡힌다.
+    <html lang="ko" className={`h-full ${inter.variable}`} suppressHydrationWarning>
+      <body
+        className="h-full overscroll-none bg-canvas text-ink antialiased"
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>
