@@ -1,6 +1,9 @@
-/* 백그라운드 서비스 워커 — 우클릭 메뉴로 담기.
- * 팝업을 열 필요 없이 링크/이미지/선택 텍스트/페이지를 바로 저장한다.
- * 결과는 확장 아이콘 배지로 알려준다 (파란 ✓ = 성공, 빨간 ! = 실패/미로그인).
+/* 백그라운드 서비스 워커.
+ * - 우클릭 메뉴 4종 (링크/이미지/선택 텍스트/페이지)
+ * - 드롭존 콘텐츠 스크립트의 이미지 담기 요청 처리
+ * - <all_urls> 권한이 있으므로 이미지는 실제로 내려받아 스토리지에 올린다
+ *   (실패하면 핫링크 카드로 폴백)
+ * 결과는 확장 아이콘 배지로: 파란 ✓ = 성공, 빨간 ! = 실패/미로그인.
  */
 
 /* global LS_CONFIG, api */
@@ -50,12 +53,28 @@ async function flashBadge(tabId, ok) {
   }, 1600);
 }
 
+/** 이미지를 실제로 내려받아 파일 카드로 저장한다. 실패하면 핫링크 카드로. */
+async function saveImage(session, boardId, srcUrl, title, pos) {
+  try {
+    const res = await fetch(srcUrl); // <all_urls> 권한으로 CORS 우회
+    if (!res.ok) throw new Error(`이미지 응답 ${res.status}`);
+    const blob = await res.blob();
+    if (!blob.type.startsWith("image/")) throw new Error("이미지가 아님");
+
+    const ext = (blob.type.split("/")[1] ?? "img").split("+")[0].slice(0, 5);
+    const name = `${(title || "이미지").slice(0, 60)}.${ext}`;
+    const file = new File([blob], name, { type: blob.type });
+    await api.addFileItem(session, boardId, file, pos);
+  } catch {
+    await api.addImageLinkItem(session, boardId, srcUrl, title, pos);
+  }
+}
+
 async function handleMenuClick(info, tab) {
   const tabId = tab?.id;
   try {
     const session = await api.getSession();
     if (!session) {
-      // 로그인 필요 — 배지로 알리고, 팝업 제목에도 남긴다
       await flashBadge(tabId, false);
       await chrome.action.setTitle({ title: "LinkScape — 로그인이 필요합니다" });
       return;
@@ -74,7 +93,7 @@ async function handleMenuClick(info, tab) {
       }
       case MENU.image: {
         if (!info.srcUrl) throw new Error("이미지 주소 없음");
-        await api.addImageLinkItem(session, boardId, info.srcUrl, tab?.title, pos);
+        await saveImage(session, boardId, info.srcUrl, tab?.title, pos);
         break;
       }
       case MENU.selection: {
@@ -102,4 +121,27 @@ async function handleMenuClick(info, tab) {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   void handleMenuClick(info, tab);
+});
+
+/* 드롭존(콘텐츠 스크립트)의 이미지 담기 요청 */
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type !== "linkscape-save-image") return undefined;
+
+  void (async () => {
+    try {
+      const session = await api.getSession();
+      if (!session) {
+        sendResponse({ ok: false, error: "로그인이 필요합니다" });
+        return;
+      }
+      const boardId = await api.ensureBoard(session);
+      const pos = await api.nextPosition(session, boardId);
+      await saveImage(session, boardId, message.srcUrl, message.title, pos);
+      sendResponse({ ok: true });
+    } catch (err) {
+      sendResponse({ ok: false, error: String(err.message ?? err).slice(0, 80) });
+    }
+  })();
+
+  return true; // 비동기 응답
 });

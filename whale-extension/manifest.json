@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "LinkScape",
-  "version": "0.1.0",
-  "description": "링크·PDF·이미지를 LinkScape 캔버스로 바로 담습니다.",
+  "version": "0.2.0",
+  "description": "링크·PDF·이미지를 LinkScape 캔버스로 바로 담습니다. 드래그하면 페이지에 드롭존이 나타납니다.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -20,6 +20,13 @@
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["config.js", "api.js", "dropzone.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "permissions": ["storage", "activeTab", "contextMenus"],
-  "host_permissions": ["https://nfwthowdcyciorqabiae.supabase.co/*"]
+  "host_permissions": ["<all_urls>"]
 }
