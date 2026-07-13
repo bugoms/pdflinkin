@@ -41,7 +41,7 @@ export default function CardShell({
       <div
         onDoubleClick={onOpen}
         className={[
-          "card-shell group flex h-full w-full flex-col overflow-hidden rounded-apple-lg border transition-opacity",
+          "card-shell group flex h-full w-full flex-col overflow-hidden rounded-apple-lg transition-opacity",
           palette.card,
           dimmed ? "opacity-25" : "opacity-100",
         ].join(" ")}

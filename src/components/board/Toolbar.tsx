@@ -2,7 +2,7 @@
 
 import { useReactFlow } from "@xyflow/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import { extractUrls } from "@/lib/url";
@@ -39,6 +39,16 @@ export default function Toolbar({
   );
 
   const [url, setUrl] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
 
   /** 화면 한가운데의 캔버스 좌표 */
   function center() {
@@ -64,14 +74,14 @@ export default function Toolbar({
   }
 
   return (
-    <header className="glass-float absolute inset-x-4 top-2 z-30 flex h-[52px] items-center gap-2 rounded-apple-lg px-4">
-      <span className="select-none text-[21px] font-semibold tracking-[-0.02em] text-ink">
-        pdflinkin
+    <header className="glass-float absolute inset-x-4 top-2 z-30 flex h-[52px] items-center gap-2 rounded-full px-5">
+      <span className="select-none text-[19px] font-semibold tracking-[-0.02em] text-ink">
+        LinkScape
       </span>
       <span className="hidden text-[14px] text-ink-48 sm:inline">{boardTitle}</span>
 
       {/* 검색·입력은 pill — "액션"의 문법 */}
-      <form onSubmit={submitUrl} className="ml-4 w-80">
+      <form onSubmit={submitUrl} className="ml-3 w-80">
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
@@ -100,25 +110,62 @@ export default function Toolbar({
         ↷
       </Utility>
 
-      <div className="ml-auto flex items-center gap-1.5">
+      <div className="ml-auto flex items-center gap-2">
         <SaveBadge state={saveState} />
 
-        <Utility onClick={onOpenSearch} title="Ctrl+K">
-          검색
-        </Utility>
-        <Utility onClick={onOpenTrash}>휴지통</Utility>
+        <div className="relative">
+          <button
+            aria-label="메뉴"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-divider bg-pearl text-ink-80 transition hover:bg-parchment"
+          >
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path
+                d="M2 4.5h12M2 8h12M2 11.5h12"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
 
-        <Divider />
+          {menuOpen && (
+            <>
+              {/* 바깥 클릭으로 닫기 */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setMenuOpen(false)}
+              />
+              <div className="glass-float absolute right-0 top-[calc(100%+10px)] z-50 w-60 overflow-hidden rounded-apple-lg py-1.5">
+                <MenuItem
+                  hint="Ctrl+K"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenSearch();
+                  }}
+                >
+                  검색
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenTrash();
+                  }}
+                >
+                  휴지통
+                </MenuItem>
 
-        <span className="hidden max-w-44 truncate text-[12px] text-ink-48 md:inline">
-          {userEmail}
-        </span>
-        <button
-          onClick={signOut}
-          className="rounded-apple-sm px-2.5 py-1.5 text-[14px] text-action transition"
-        >
-          로그아웃
-        </button>
+                <div className="mx-3 my-1.5 h-px bg-divider" />
+
+                <p className="truncate px-4 pb-1 pt-1.5 text-[12px] text-ink-48">
+                  {userEmail}
+                </p>
+                <MenuItem onClick={() => void signOut()}>로그아웃</MenuItem>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );
@@ -141,9 +188,29 @@ function Utility({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="rounded-apple-md border border-divider bg-pearl px-3 py-1.5 text-[14px] text-ink-80 transition hover:bg-parchment disabled:opacity-30 disabled:hover:bg-pearl"
+      className="rounded-full border border-divider bg-pearl px-3.5 py-1.5 text-[14px] text-ink-80 transition hover:bg-parchment disabled:opacity-30 disabled:hover:bg-pearl"
     >
       {children}
+    </button>
+  );
+}
+
+function MenuItem({
+  children,
+  hint,
+  onClick,
+}: {
+  children: React.ReactNode;
+  hint?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center justify-between px-4 py-2 text-left text-[14px] text-ink transition hover:bg-black/[0.04]"
+    >
+      <span>{children}</span>
+      {hint && <span className="text-[12px] text-ink-48">{hint}</span>}
     </button>
   );
 }

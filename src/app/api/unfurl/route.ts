@@ -11,7 +11,7 @@ const MAX_BYTES = 512 * 1024; // head 만 필요하므로 512KB 면 충분
 const TIMEOUT_MS = 8000;
 const MAX_REDIRECTS = 3;
 const UA =
-  "Mozilla/5.0 (compatible; pdflinkin/1.0; +https://github.com/bugoms/pdflinkin)";
+  "Mozilla/5.0 (compatible; LinkScape/1.0; +https://github.com/bugoms/pdflinkin)";
 
 /* ---------------------------------------------------------------------------
  * SSRF 방어: 사설/루프백/링크로컬 대역으로는 절대 요청하지 않는다.

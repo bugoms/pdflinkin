@@ -76,7 +76,7 @@ export default function LoginPage() {
       <div className="w-full max-w-[420px]">
         <header className="text-center">
           <h1 className="text-[56px] font-semibold leading-[1.07] tracking-[-0.02em] text-ink">
-            pdflinkin
+            LinkScape
           </h1>
           <p className="mx-auto mt-3 max-w-[340px] text-[21px] font-normal leading-[1.28] text-ink-48">
             링크와 PDF를 캔버스에 펼쳐두는 개인 아카이브.

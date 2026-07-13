@@ -24,27 +24,27 @@ export const COLOR_TOKENS: ColorToken[] = [
  */
 export const CARD_COLORS: Record<ColorToken, { card: string; swatch: string }> = {
   neutral: {
-    card: "border-hairline bg-canvas",
+    card: "border border-hairline bg-canvas",
     swatch: "bg-[#d2d2d7]",
   },
   sky: {
-    card: "border-[#5aa9f5] bg-canvas",
+    card: "border-2 border-[#5aa9f5] bg-canvas",
     swatch: "bg-[#5aa9f5]",
   },
   emerald: {
-    card: "border-[#4cae72] bg-canvas",
+    card: "border-2 border-[#4cae72] bg-canvas",
     swatch: "bg-[#4cae72]",
   },
   amber: {
-    card: "border-[#e5a83c] bg-canvas",
+    card: "border-2 border-[#e5a83c] bg-canvas",
     swatch: "bg-[#e5a83c]",
   },
   rose: {
-    card: "border-[#e0687a] bg-canvas",
+    card: "border-2 border-[#e0687a] bg-canvas",
     swatch: "bg-[#e0687a]",
   },
   violet: {
-    card: "border-[#8c6fe0] bg-canvas",
+    card: "border-2 border-[#8c6fe0] bg-canvas",
     swatch: "bg-[#8c6fe0]",
   },
 };

@@ -27,7 +27,7 @@
   --radius-apple-lg: 18px;
 
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter),
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
     system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
 
@@ -37,7 +37,7 @@
 
 body {
   font-family: var(--font-sans);
-  letter-spacing: -0.01em; /* SF Pro 의 "Apple tight" 감각을 Inter 로 흉내낸다 */
+  letter-spacing: -0.01em; /* Pretendard 를 애플 특유의 타이트한 자간으로 */
 }
 
 /* 키보드 포커스만 링을 보여준다 */
