@@ -1,0 +1,309 @@
+/* 웹사이트 globals.css 의 디자인 토큰을 그대로 옮긴 것 (DESIGN-apple.md)
+ * - Action Blue 하나만 "누를 수 있음"을 뜻한다. 그림자 없음, 면은 헤어라인으로.
+ * - rounded-full = 액션 / 11px = 유틸리티 / 18px = 카드·패널
+ */
+:root {
+  --canvas: #ffffff;
+  --parchment: #f5f5f7;
+  --pearl: #fafafc;
+  --ink: #1d1d1f;
+  --ink-80: #333333;
+  --ink-48: #7a7a7a;
+  --hairline: #e0e0e0;
+  --divider: #f0f0f0;
+  --action: #0066cc;
+  --action-focus: #0071e3;
+  --r-sm: 8px;
+  --r-md: 11px;
+  --r-lg: 18px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 360px;
+  min-height: 430px;
+  font-family:
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  background: var(--canvas);
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  min-height: 430px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button {
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+input {
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  outline: none;
+}
+
+input::placeholder {
+  color: var(--ink-48);
+}
+
+input:focus {
+  border-color: var(--action-focus);
+}
+
+/* ------------------------------------------------------------------ 로그인 */
+
+.logo {
+  margin-top: 34px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-48);
+  margin-bottom: 14px;
+}
+
+#login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#login-form input {
+  height: 44px;
+  border-radius: var(--r-md);
+  padding: 0 14px;
+  font-size: 15px;
+}
+
+.action {
+  height: 44px;
+  border-radius: 999px;
+  background: var(--action);
+  color: #fff;
+  font-size: 15px;
+}
+
+.action:disabled {
+  opacity: 0.4;
+}
+
+.error {
+  background: var(--parchment);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-80);
+}
+
+.hint-line {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-48);
+}
+
+.hint-line a,
+.text-action {
+  color: var(--action);
+  text-decoration: none;
+}
+
+/* -------------------------------------------------------------------- 메인 */
+
+header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.logo-sm {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+header .text-action {
+  font-size: 13px;
+}
+
+.url-row {
+  display: flex;
+  gap: 6px;
+}
+
+.url-row input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  border-radius: 999px;
+  padding: 0 14px;
+}
+
+.utility {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 0 14px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--divider);
+  background: var(--pearl);
+  color: var(--ink-80);
+}
+
+.utility:hover {
+  background: var(--parchment);
+}
+
+#dropzone {
+  flex: 1;
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1.5px dashed var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--pearl);
+  text-align: center;
+  padding: 18px;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+#dropzone.over {
+  border-color: var(--action);
+  background: rgba(0, 102, 204, 0.05);
+}
+
+#dropzone kbd {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--canvas);
+  margin-bottom: 4px;
+}
+
+.dz-main {
+  font-size: 14px;
+  color: var(--ink-80);
+}
+
+.dz-sub {
+  font-size: 12px;
+  color: var(--ink-48);
+}
+
+/* -------------------------------------------------------------- 작업 목록 */
+
+#tasks {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 132px;
+  overflow-y: auto;
+}
+
+#tasks li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 6px 10px;
+  border: 1px solid var(--divider);
+  border-radius: var(--r-md);
+  background: var(--canvas);
+}
+
+#tasks .label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-80);
+}
+
+#tasks .state {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--ink-48);
+}
+
+#tasks li.done .state {
+  color: var(--action);
+}
+
+#tasks li.fail .state {
+  color: #d70015;
+}
+
+/* -------------------------------------------------------------------- 푸터 */
+
+footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--divider);
+  padding-top: 10px;
+  font-size: 12px;
+  color: var(--ink-48);
+}
+
+#account-email {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--action);
+}
+
+/* 스크롤바 — 웹사이트와 동일 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d2d2d7 transparent;
+}

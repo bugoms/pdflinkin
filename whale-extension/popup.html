@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="light" />
+    <link rel="stylesheet" href="popup.css" />
+    <title>LinkScape</title>
+  </head>
+  <body>
+    <!-- 로그인 -->
+    <section id="login-view" hidden>
+      <h1 class="logo">LinkScape</h1>
+      <p class="tagline">링크와 PDF를 캔버스에 담습니다.</p>
+
+      <form id="login-form">
+        <input id="login-email" type="email" required autocomplete="email" placeholder="이메일" />
+        <input id="login-password" type="password" required minlength="6" autocomplete="current-password" placeholder="비밀번호" />
+        <button type="submit" class="action" id="login-submit">로그인</button>
+      </form>
+      <p id="login-error" class="error" hidden></p>
+      <p class="hint-line">
+        계정이 없나요? <a id="signup-link" href="#" target="_blank" rel="noreferrer">웹에서 가입 ›</a>
+      </p>
+    </section>
+
+    <!-- 메인 -->
+    <section id="main-view" hidden>
+      <header>
+        <span class="logo-sm">LinkScape</span>
+        <a id="open-board" class="text-action" href="#" target="_blank" rel="noreferrer">보드 열기 ↗</a>
+      </header>
+
+      <button id="capture-tab" class="action" hidden>현재 탭 담기</button>
+
+      <form id="url-form" class="url-row">
+        <input id="url-input" type="text" placeholder="링크 붙여넣고 Enter" />
+        <button type="submit" class="utility">담기</button>
+      </form>
+
+      <div id="dropzone">
+        <kbd>Ctrl + V</kbd>
+        <p class="dz-main">복사한 링크·텍스트를 카드로</p>
+        <p class="dz-sub">PDF · 이미지 파일을 여기에 드래그앤드롭</p>
+      </div>
+
+      <ul id="tasks"></ul>
+
+      <footer>
+        <span id="account-email"></span>
+        <button id="sign-out" class="text-btn">로그아웃</button>
+      </footer>
+    </section>
+
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

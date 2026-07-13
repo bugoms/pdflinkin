@@ -12,6 +12,7 @@ import Inspector from "./Inspector";
 import SearchPalette from "./SearchPalette";
 import Toolbar from "./Toolbar";
 import TrashPanel from "./TrashPanel";
+import { usePdfBackfill } from "./usePdfBackfill";
 import Viewer from "./Viewer";
 
 export default function BoardClient(props: {
@@ -45,6 +46,9 @@ export default function BoardClient(props: {
   }, [init, props]);
 
   useEffect(() => installFlushOnUnload(), []);
+
+  // 확장 등에서 썸네일 없이 올라온 PDF 를 열람 시점에 보정한다
+  usePdfBackfill();
 
   // 스토어 기준으로 실시간 판정 — 첫 카드가 생기는 순간 안내가 사라진다.
   // (init 전에는 boardId 가 비어 있으므로 잘못 떠 있지 않는다)
@@ -123,7 +127,7 @@ function TagFilterBar() {
 
 function EmptyHint() {
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6">
       <div className="glass-float w-full max-w-[320px] rounded-apple-lg px-6 py-5 text-center">
         <h2 className="text-[19px] font-semibold leading-[1.2] tracking-[-0.02em] text-ink">
           빈 캔버스입니다
