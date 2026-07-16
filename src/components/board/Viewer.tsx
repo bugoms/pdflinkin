@@ -6,7 +6,7 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { destroyPdf, loadPdfFromUrl, renderPageToCanvas } from "@/lib/pdf";
-import { signPath } from "@/lib/storage";
+import { downloadFileName, downloadStoredFile, signPath } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/client";
 import { useBoard } from "@/store/board";
 import { useViewer } from "@/store/viewer";
@@ -15,6 +15,22 @@ export default function Viewer() {
   const itemId = useViewer((s) => s.itemId);
   const close = useViewer((s) => s.close);
   const item = useBoard((s) => (itemId ? s.items[itemId] : undefined));
+  const [downloading, setDownloading] = useState(false);
+
+  async function download() {
+    if (!item?.storage_path || downloading) return;
+    setDownloading(true);
+    try {
+      const ok = await downloadStoredFile(
+        createClient(),
+        item.storage_path,
+        downloadFileName(item.title, item.file_name, item.storage_path),
+      );
+      if (!ok) window.alert("다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   useEffect(() => {
     if (!itemId) return;
@@ -33,9 +49,20 @@ export default function Viewer() {
         <span className="truncate text-[17px] font-semibold tracking-[-0.01em] text-ink">
           {item.title || item.file_name || "보기"}
         </span>
-        <button onClick={close} className="ml-auto text-[14px] text-action transition">
-          닫기 (Esc)
-        </button>
+        <div className="ml-auto flex shrink-0 items-center gap-5">
+          {item.storage_path && (
+            <button
+              onClick={() => void download()}
+              disabled={downloading}
+              className="text-[14px] text-action transition disabled:opacity-40"
+            >
+              {downloading ? "다운로드 중…" : "다운로드 ↓"}
+            </button>
+          )}
+          <button onClick={close} className="text-[14px] text-action transition">
+            닫기 (Esc)
+          </button>
+        </div>
       </header>
 
       {item.kind === "pdf" ? (

@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import { CARD_COLORS, PICKER_TOKENS, isCustomColor } from "@/lib/palette";
+import { downloadFileName, downloadStoredFile } from "@/lib/storage";
+import { createClient } from "@/lib/supabase/client";
 import { useBoard } from "@/store/board";
 import { useSelection } from "@/store/selection";
 import { useViewer } from "@/store/viewer";
@@ -23,6 +25,7 @@ export default function Inspector() {
   const openViewer = useViewer((s) => s.open);
 
   const colorTimer = useRef<number | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const selectedId = nodeIds.size === 1 ? [...nodeIds][0] : null;
   const item = selectedId ? items[selectedId] : undefined;
@@ -59,6 +62,21 @@ export default function Inspector() {
   function setColorDebounced(color: string) {
     if (colorTimer.current !== null) window.clearTimeout(colorTimer.current);
     colorTimer.current = window.setTimeout(() => setColor(color), 250);
+  }
+
+  async function download() {
+    if (!item?.storage_path || downloading) return;
+    setDownloading(true);
+    try {
+      const ok = await downloadStoredFile(
+        createClient(),
+        item.storage_path,
+        downloadFileName(item.title, item.file_name, item.storage_path),
+      );
+      if (!ok) window.alert("다운로드 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   return (
@@ -126,24 +144,39 @@ export default function Inspector() {
       </div>
 
       {item && (
-        <div className="mt-4 flex gap-2">
-          {item.url && (
+        <>
+          {(item.url || item.kind === "pdf" || item.kind === "image") && (
+            <div className="mt-4 flex gap-2">
+              {item.url && (
+                <button
+                  onClick={() => window.open(item.url!, "_blank", "noopener,noreferrer")}
+                  className="flex-1 rounded-full bg-action px-3 py-2 text-[14px] text-white transition"
+                >
+                  원본 열기 ↗
+                </button>
+              )}
+              {(item.kind === "pdf" || item.kind === "image") && (
+                <button
+                  onClick={() => openViewer(item.id)}
+                  className="flex-1 rounded-full bg-action px-3 py-2 text-[14px] text-white transition"
+                >
+                  열기
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* 업로드해 둔 원본이 있으면 다시 내려받을 수 있다 */}
+          {item.storage_path && (
             <button
-              onClick={() => window.open(item.url!, "_blank", "noopener,noreferrer")}
-              className="flex-1 rounded-full bg-action px-3 py-2 text-[14px] text-white transition"
+              onClick={() => void download()}
+              disabled={downloading}
+              className="mt-2 w-full rounded-full border border-divider bg-pearl px-3 py-2 text-[14px] text-ink-80 transition hover:bg-parchment disabled:opacity-40"
             >
-              원본 열기 ↗
+              {downloading ? "다운로드 중…" : "다운로드 ↓"}
             </button>
           )}
-          {(item.kind === "pdf" || item.kind === "image") && (
-            <button
-              onClick={() => openViewer(item.id)}
-              className="flex-1 rounded-full bg-action px-3 py-2 text-[14px] text-white transition"
-            >
-              열기
-            </button>
-          )}
-        </div>
+        </>
       )}
     </aside>
   );
