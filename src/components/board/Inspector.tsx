@@ -1,6 +1,8 @@
 "use client";
 
-import { CARD_COLORS, COLOR_TOKENS } from "@/lib/palette";
+import { useRef } from "react";
+
+import { CARD_COLORS, PICKER_TOKENS, isCustomColor } from "@/lib/palette";
 import { useBoard } from "@/store/board";
 import { useSelection } from "@/store/selection";
 import { useViewer } from "@/store/viewer";
@@ -19,6 +21,8 @@ export default function Inspector() {
   const frames = useBoard((s) => s.frames);
   const apply = useBoard((s) => s.apply);
   const openViewer = useViewer((s) => s.open);
+
+  const colorTimer = useRef<number | null>(null);
 
   const selectedId = nodeIds.size === 1 ? [...nodeIds][0] : null;
   const item = selectedId ? items[selectedId] : undefined;
@@ -51,6 +55,12 @@ export default function Inspector() {
     });
   }
 
+  /** 컬러 피커는 드래그하는 동안 input 이벤트가 연발된다 — 멈췄을 때 한 번만 커밋 */
+  function setColorDebounced(color: string) {
+    if (colorTimer.current !== null) window.clearTimeout(colorTimer.current);
+    colorTimer.current = window.setTimeout(() => setColor(color), 250);
+  }
+
   return (
     <aside className="glass-float absolute inset-x-2 bottom-[72px] z-20 rounded-apple-lg p-4 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[76px] sm:w-[264px]">
       <p className="text-[12px] font-semibold uppercase tracking-wide text-ink-48">
@@ -73,7 +83,7 @@ export default function Inspector() {
       <div className="mt-4">
         <p className="mb-2 text-[12px] text-ink-48">색</p>
         <div className="flex gap-2">
-          {COLOR_TOKENS.map((token) => (
+          {PICKER_TOKENS.map((token) => (
             <button
               key={token}
               onClick={() => setColor(token)}
@@ -87,6 +97,31 @@ export default function Inspector() {
               aria-label={token}
             />
           ))}
+
+          {/* 여섯 번째 자리 — 아무 색이나 직접 고르는 팔레트 */}
+          <label
+            title="원하는 색 직접 고르기"
+            className={[
+              "relative h-6 w-6 cursor-pointer rounded-full transition",
+              isCustomColor(currentColor)
+                ? "ring-2 ring-action-focus ring-offset-2 ring-offset-canvas"
+                : "opacity-70 hover:opacity-100",
+            ].join(" ")}
+            style={{
+              background: isCustomColor(currentColor)
+                ? currentColor
+                : "conic-gradient(#e0687a, #e5a83c, #4cae72, #5aa9f5, #8c6fe0, #e0687a)",
+            }}
+          >
+            <input
+              key={selectedId}
+              type="color"
+              defaultValue={isCustomColor(currentColor) ? currentColor : "#8c6fe0"}
+              onChange={(e) => setColorDebounced(e.target.value)}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              aria-label="직접 색 고르기"
+            />
+          </label>
         </div>
       </div>
 

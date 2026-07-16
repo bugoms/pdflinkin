@@ -46,6 +46,13 @@ body {
   outline-offset: 2px;
 }
 
+/* 텍스트 필드는 자체 포커스 보더(focus:border-action-focus)로 표시한다.
+   전역 링은 레이어 바깥이라 Tailwind outline-none 을 이겨서 테두리가 이중으로 생긴다. */
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
 /* 시스템 전역 마이크로 인터랙션 */
 button:active:not(:disabled) {
   transform: scale(0.97);

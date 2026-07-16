@@ -192,18 +192,34 @@ function bindMain() {
   let allFrames = []; // 그룹(프레임) 목록
   let searchTimer = null;
 
+  /** "#rrggbb" 는 웹의 컬러 피커로 직접 고른 커스텀 색 */
+  function isCustomColor(color) {
+    return typeof color === "string" && color.startsWith("#");
+  }
+
+  /** 색 점 — 토큰이면 클래스, 커스텀 hex 면 인라인 배경 */
+  function colorDot(color) {
+    const dot = document.createElement("span");
+    if (isCustomColor(color)) {
+      dot.className = "dot";
+      dot.style.background = color;
+    } else {
+      dot.className = `dot ${COLOR_ORDER.includes(color) ? color : "neutral"}`;
+    }
+    return dot;
+  }
+
+  function colorIndex(color) {
+    const idx = COLOR_ORDER.indexOf(color ?? "neutral");
+    return idx === -1 ? COLOR_ORDER.length : idx; // 커스텀 색은 토큰들 뒤에
+  }
+
   function sortByColor(items) {
-    return [...items].sort(
-      (a, b) =>
-        COLOR_ORDER.indexOf(a.color ?? "neutral") -
-        COLOR_ORDER.indexOf(b.color ?? "neutral"),
-    );
+    return [...items].sort((a, b) => colorIndex(a.color) - colorIndex(b.color));
   }
 
   function itemRow(item, isChild) {
-    const color = COLOR_ORDER.includes(item.color) ? item.color : "neutral";
     const li = document.createElement("li");
-    li.dataset.color = color;
     if (isChild) li.className = "child";
 
     const button = document.createElement("button");
@@ -216,8 +232,7 @@ function bindMain() {
       button.append(tree);
     }
 
-    const dot = document.createElement("span");
-    dot.className = `dot ${color}`;
+    const dot = colorDot(item.color);
 
     const title = document.createElement("span");
     title.className = "title";
@@ -235,8 +250,7 @@ function bindMain() {
     const li = document.createElement("li");
     li.className = "group-header";
 
-    const dot = document.createElement("span");
-    dot.className = `dot ${COLOR_ORDER.includes(color) ? color : "neutral"}`;
+    const dot = colorDot(color);
 
     const name = document.createElement("span");
     name.className = "group-name";

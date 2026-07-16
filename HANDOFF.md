@@ -171,7 +171,9 @@ whale-extension/              ★ 웨일/크롬 확장 (전체가 순수 JS)
 - 올가미는 데스크톱 전용 — `isMobile`(pointer:coarse 또는 <640px, matchMedia 실시간) 이면 드래그=팬
 
 ### 디자인 (globals.css `@theme` 이 단일 출처)
-- Action Blue(#0066cc) 하나만 "누를 수 있음". 카드 색 6종은 분류용 — **외곽선 2px로만** (배경 채움 금지)
+- Action Blue(#0066cc) 하나만 "누를 수 있음". 카드 색은 분류용 — **외곽선 2px로만** (배경 채움 금지)
+  - 선택지는 토큰 5종(`PICKER_TOKENS`) + 커스텀 팔레트(`#rrggbb` 저장, `isCustomColor` 판별, 인라인 스타일로 렌더).
+    violet 토큰은 선택지에서 빠졌지만 기존 카드 때문에 `CARD_COLORS` 에 남아 있음
 - 그림자 예외는 둘뿐: `.product-shadow`(PDF 지면·사진), `.glass-float`(떠 있는 크롬)
 - 모양 문법: rounded-full=액션·알약 / apple-md(11px)=유틸 / apple-lg(18px)=카드·패널
 - 폰트는 Pretendard 하나. 다크 모드 없음

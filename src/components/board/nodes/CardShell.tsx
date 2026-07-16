@@ -2,7 +2,7 @@
 
 import { Handle, NodeResizer, Position } from "@xyflow/react";
 
-import { cardColor } from "@/lib/palette";
+import { cardColor, isCustomColor } from "@/lib/palette";
 import { useBoard } from "@/store/board";
 
 import { ITEM_MIN_H, ITEM_MIN_W } from "./types";
@@ -22,6 +22,8 @@ export default function CardShell({
 }) {
   const beginInteraction = useBoard((s) => s.beginInteraction);
   const endInteraction = useBoard((s) => s.endInteraction);
+  // 커스텀 hex 는 Tailwind 클래스로 못 만든다(정적 스캔) — 인라인 스타일로만
+  const customColor = isCustomColor(color) ? color : null;
   const palette = cardColor(color);
 
   return (
@@ -42,9 +44,10 @@ export default function CardShell({
         onDoubleClick={onOpen}
         className={[
           "card-shell group flex h-full w-full flex-col overflow-hidden rounded-apple-lg transition-opacity",
-          palette.card,
+          customColor ? "border-2 bg-canvas" : palette.card,
           dimmed ? "opacity-25" : "opacity-100",
         ].join(" ")}
+        style={customColor ? { borderColor: customColor } : undefined}
       >
         {children}
       </div>

@@ -15,6 +15,21 @@ export const COLOR_TOKENS: ColorToken[] = [
   "violet",
 ];
 
+/** 색 선택 UI 에 노출하는 토큰 — 여섯 번째 자리는 커스텀 팔레트가 차지한다.
+ *  violet 은 선택지에서 빠졌지만 기존 카드 렌더링을 위해 CARD_COLORS 에는 남긴다. */
+export const PICKER_TOKENS: ColorToken[] = [
+  "neutral",
+  "sky",
+  "emerald",
+  "amber",
+  "rose",
+];
+
+/** "#rrggbb" — 팔레트 토큰이 아니라 사용자가 컬러 피커로 직접 고른 색 */
+export function isCustomColor(color: string | null | undefined): color is string {
+  return typeof color === "string" && color.startsWith("#");
+}
+
 /**
  * 카드 색은 "분류"지 "액션"이 아니다.
  * 면은 항상 흰 종이(bg-canvas)로 두고, 색은 외곽선으로만 구분한다 — 칸을 칠하지 않는다.
