@@ -2,7 +2,7 @@
 
 import { useReactFlow } from "@xyflow/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import { extractUrls } from "@/lib/url";
@@ -40,14 +40,26 @@ export default function Toolbar({
 
   const [url, setUrl] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
+  // 메뉴 밖 어디를 눌러도(캔버스의 카드·그룹 포함) 즉시 닫는다.
+  // 오버레이 div 방식은 헤더의 backdrop-filter 가 fixed 기준을 가로채 동작하지 않았다.
   useEffect(() => {
     if (!menuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setMenuOpen(false);
     };
+    document.addEventListener("pointerdown", onPointerDown, true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      window.removeEventListener("keydown", onKey);
+    };
   }, [menuOpen]);
 
   /** 화면 한가운데의 캔버스 좌표 */
@@ -119,11 +131,15 @@ export default function Toolbar({
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <SaveBadge state={saveState} />
 
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
             aria-label="메뉴"
             aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => {
+              // 카드/그룹 설정창(인스펙터)이 떠 있으면 선택을 풀어 닫고 메뉴를 연다
+              useSelection.getState().clear();
+              setMenuOpen((v) => !v);
+            }}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-divider bg-pearl text-ink-80 transition hover:bg-parchment"
           >
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -138,11 +154,6 @@ export default function Toolbar({
 
           {menuOpen && (
             <>
-              {/* 바깥 클릭으로 닫기 */}
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setMenuOpen(false)}
-              />
               <div className="glass-float absolute right-0 top-[calc(100%+10px)] z-50 w-60 overflow-hidden rounded-apple-lg py-1.5">
                 <MenuItem
                   hint="Ctrl+K"

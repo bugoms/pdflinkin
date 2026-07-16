@@ -7,6 +7,7 @@ import {
   MarkerType,
   MiniMap,
   ReactFlow,
+  SelectionMode,
   useReactFlow,
   type Connection,
   type Edge,
@@ -598,7 +599,8 @@ export default function Canvas({ onOpenSearch }: { onOpenSearch: () => void }) {
         deleteKeyCode={null}
         multiSelectionKeyCode={["Shift", "Meta", "Control"]}
         selectionKeyCode={null}
-        /* selectionMode 기본값 = Full: 올가미에 완전히 들어온 카드만 선택된다 */
+        /* Partial: 올가미에 조금이라도 걸친 카드는 선택된다 */
+        selectionMode={SelectionMode.Partial}
         panOnDrag={isMobile ? true : [1]}
         selectionOnDrag={!isMobile}
         panOnScroll
