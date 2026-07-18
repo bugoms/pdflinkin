@@ -9,14 +9,6 @@ import { useBoard } from "@/store/board";
 import { useSelection } from "@/store/selection";
 import { useViewer } from "@/store/viewer";
 
-const KIND_LABEL: Record<string, string> = {
-  link: "링크",
-  pdf: "PDF",
-  image: "이미지",
-  note: "메모",
-  file: "파일",
-};
-
 export default function Inspector() {
   const nodeIds = useSelection((s) => s.nodeIds);
   const items = useBoard((s) => s.items);
@@ -82,7 +74,7 @@ export default function Inspector() {
   return (
     <aside className="glass-float absolute inset-x-2 bottom-[72px] z-20 rounded-apple-lg p-4 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[76px] sm:w-[264px]">
       <p className="text-[12px] font-semibold uppercase tracking-wide text-ink-48">
-        {frame ? "그룹" : (KIND_LABEL[item?.kind ?? ""] ?? "")}
+        {frame ? "그룹" : "제목"}
       </p>
 
       <input
