@@ -30,6 +30,23 @@ export function toLocal(p: Point, frame: FrameRow | null): Point {
   return { x: p.x - frame.x, y: p.y - frame.y };
 }
 
+/** 점이 다각형 안에 있는지 (홀짝 규칙). 다각형은 자동으로 닫힌 것으로 본다
+ *  — 마지막 점과 첫 점을 잇는 변까지 포함하므로 자유형 올가미가 안 닫혀도 폐합된다. */
+export function pointInPolygon(p: Point, poly: Point[]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i].x;
+    const yi = poly[i].y;
+    const xj = poly[j].x;
+    const yj = poly[j].y;
+    const intersect =
+      yi > p.y !== yj > p.y &&
+      p.x < ((xj - xi) * (p.y - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
 /** 카드 여러 장을 격자로 배치할 때 쓸 오프셋 */
 export function gridOffset(index: number, columns = 4, gapX = 280, gapY = 230): Point {
   return {

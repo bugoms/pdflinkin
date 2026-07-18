@@ -178,7 +178,11 @@ whale-extension/              ★ 웨일/크롬 확장 (전체가 순수 JS)
 - 노드는 스토어에서 유도(controlled). **`measured:{width,height}` 필수** (5번 표 참고)
 - **`zoomOnDoubleClick={false}` 유지**, `deleteKeyCode={null}`, 프레임 노드가 배열에서 자식보다 앞
 - `dimensions` 변경은 `setAttributes` true 일 때만 반영
-- 올가미는 데스크톱 전용 — `isMobile`(pointer:coarse 또는 <640px, matchMedia 실시간) 이면 드래그=팬
+- **선택 올가미**(빈 곳 드래그 = Partial 선택)는 데스크톱 전용 — `isMobile`(pointer:coarse 또는 <640px) 이면 드래그=팬
+- **그룹 올가미**(2026-07-18): 툴바 "그룹 ▾" → 사각형/자유형 선택 → `useGroupMode` 로 모드 켜짐 →
+  `GroupLasso` 오버레이(z-10, 캔버스 위)가 영역을 받아 **감싼 카드(중심점 기준)를 새 프레임에 재소속**.
+  자유형은 `pointInPolygon`(홀짝, 자동 폐합)으로 판정. 프레임 생성+재소속은 단일 `apply()`=언두 1스텝.
+  모드 중 `selectionOnDrag` 끔. Esc 취소. 우클릭 "그룹 추가"·모바일 하단바 "그룹" 은 여전히 빈 프레임(`addFrame`)
 
 ### 디자인 (globals.css `@theme` 이 단일 출처)
 - Action Blue(#0066cc) 하나만 "누를 수 있음". 카드 색은 분류용 — **외곽선 2px로만** (배경 채움 금지)

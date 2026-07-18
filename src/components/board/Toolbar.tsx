@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { extractUrls } from "@/lib/url";
 import { flush, useBoard } from "@/store/board";
+import { useGroupMode } from "@/store/groupMode";
 import { useSelection } from "@/store/selection";
 
 import BoardSwitcher from "./BoardSwitcher";
@@ -39,15 +40,19 @@ export default function Toolbar({
   const canRedo = useBoard((s) => s.redoStack.length > 0);
 
   const { deleteSelected } = useBoardActions();
+  const setGroupMode = useGroupMode((s) => s.setMode);
   const hasSelection = useSelection(
     (s) => s.nodeIds.size > 0 || s.edgeIds.size > 0,
   );
 
   const [url, setUrl] = useState("");
-  // 한 번에 하나의 드롭다운만 열린다 (보드 전환 / 햄버거 메뉴 상호배제)
-  const [openPanel, setOpenPanel] = useState<null | "board" | "menu">(null);
+  // 한 번에 하나의 드롭다운만 열린다 (보드 전환 / 그룹 타입 / 햄버거 메뉴 상호배제)
+  const [openPanel, setOpenPanel] = useState<null | "board" | "group" | "menu">(
+    null,
+  );
   const menuRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
 
   // 패널 밖 어디를 눌러도(캔버스의 카드·그룹 포함) 즉시 닫는다.
   // 오버레이 div 방식은 헤더의 backdrop-filter 가 fixed 기준을 가로채 동작하지 않았다.
@@ -57,7 +62,8 @@ export default function Toolbar({
       const node = e.target as Node;
       const inMenu = menuRef.current?.contains(node);
       const inBoard = boardRef.current?.contains(node);
-      if (!inMenu && !inBoard) setOpenPanel(null);
+      const inGroup = groupRef.current?.contains(node);
+      if (!inMenu && !inBoard && !inGroup) setOpenPanel(null);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpenPanel(null);
@@ -91,6 +97,13 @@ export default function Toolbar({
     await createClient().auth.signOut();
     router.replace("/login");
     router.refresh();
+  }
+
+  /** 올가미 그룹 모드 시작 — 캔버스 오버레이가 영역을 받아 그룹을 만든다 */
+  function startGroup(m: "rect" | "free") {
+    useSelection.getState().clear();
+    setGroupMode(m);
+    setOpenPanel(null);
   }
 
   return (
@@ -128,7 +141,57 @@ export default function Toolbar({
         <Divider />
 
         <Utility onClick={() => addNote(center())}>메모</Utility>
-        <Utility onClick={() => addFrame(center())}>그룹</Utility>
+
+        {/* 그룹 = 올가미로 영역을 감싸 묶기. 사각형/자유형 선택 */}
+        <div className="relative" ref={groupRef}>
+          <Utility
+            onClick={() =>
+              setOpenPanel((p) => (p === "group" ? null : "group"))
+            }
+            title="영역을 올가미로 감싸 그룹 만들기"
+          >
+            그룹 ▾
+          </Utility>
+
+          {openPanel === "group" && (
+            <div className="glass-float absolute left-0 top-[calc(100%+10px)] z-50 w-48 overflow-hidden rounded-apple-lg py-1.5">
+              <p className="px-4 pb-1 pt-1 text-[11px] text-ink-48">
+                영역으로 묶기
+              </p>
+              <LassoOption
+                onClick={() => startGroup("rect")}
+                label="사각형 올가미"
+                icon={
+                  <rect
+                    x="2.5"
+                    y="3.5"
+                    width="11"
+                    height="9"
+                    rx="1.5"
+                    stroke="currentColor"
+                    strokeWidth="1.3"
+                    strokeDasharray="2.5 2"
+                    fill="none"
+                  />
+                }
+              />
+              <LassoOption
+                onClick={() => startGroup("free")}
+                label="자유형 올가미"
+                icon={
+                  <path
+                    d="M3 8c0-3 3-4 5-3s1 4 3 5-1 3-3 2-5-1-5-4Z"
+                    stroke="currentColor"
+                    strokeWidth="1.3"
+                    strokeLinejoin="round"
+                    strokeDasharray="2.5 2"
+                    fill="none"
+                  />
+                }
+              />
+            </div>
+          )}
+        </div>
 
         <Divider />
 
@@ -242,6 +305,35 @@ function Utility({
       className="shrink-0 whitespace-nowrap rounded-full border border-divider bg-pearl px-3.5 py-1.5 text-[14px] text-ink-80 transition hover:bg-parchment disabled:opacity-30 disabled:hover:bg-pearl"
     >
       {children}
+    </button>
+  );
+}
+
+function LassoOption({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-[14px] text-ink transition hover:bg-black/[0.04]"
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        aria-hidden
+        className="shrink-0 text-ink-48"
+      >
+        {icon}
+      </svg>
+      <span>{label}</span>
     </button>
   );
 }

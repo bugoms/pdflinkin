@@ -27,9 +27,11 @@ import { absolutePosition, frameAtPoint, toLocal, type Point } from "@/lib/geome
 import type { EdgeRow } from "@/lib/types";
 import { extractUrls } from "@/lib/url";
 import { useBoard } from "@/store/board";
+import { useGroupMode } from "@/store/groupMode";
 import { useSelection } from "@/store/selection";
 
 import ContextMenu, { type MenuEntry } from "./ContextMenu";
+import GroupLasso from "./GroupLasso";
 import FrameNode from "./nodes/FrameNode";
 import ImageNode from "./nodes/ImageNode";
 import LinkNode from "./nodes/LinkNode";
@@ -94,6 +96,9 @@ export default function Canvas({ onOpenSearch }: { onOpenSearch: () => void }) {
   const { addLinks, addFiles, addNote, addFrame } = useIngest();
   const { deleteSelected, duplicateSelected, deleteEdge, openItem } =
     useBoardActions();
+
+  const groupLassoMode = useGroupMode((s) => s.mode);
+  const setGroupMode = useGroupMode((s) => s.setMode);
 
   const selectedNodeIds = useSelection((s) => s.nodeIds);
   const selectedEdgeIds = useSelection((s) => s.edgeIds);
@@ -602,7 +607,7 @@ export default function Canvas({ onOpenSearch }: { onOpenSearch: () => void }) {
         /* Partial: 올가미에 조금이라도 걸친 카드는 선택된다 */
         selectionMode={SelectionMode.Partial}
         panOnDrag={isMobile ? true : [1]}
-        selectionOnDrag={!isMobile}
+        selectionOnDrag={!isMobile && !groupLassoMode}
         panOnScroll
         zoomOnScroll={false}
         zoomOnDoubleClick={false}
@@ -633,6 +638,10 @@ export default function Canvas({ onOpenSearch }: { onOpenSearch: () => void }) {
           nodeColor={(node) => (node.type === "frame" ? "#d2d2d7" : "#b8b8bd")}
         />
       </ReactFlow>
+
+      {groupLassoMode && (
+        <GroupLasso mode={groupLassoMode} onDone={() => setGroupMode(null)} />
+      )}
 
       {dragOver && (
         <div className="pointer-events-none absolute inset-5 z-10 flex items-center justify-center rounded-apple-lg border-2 border-dashed border-action bg-action/5">
