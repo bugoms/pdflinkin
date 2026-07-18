@@ -7,7 +7,11 @@ import type { EdgeRow, FrameRow, ItemRow, TagRow } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function BoardPage() {
+export default async function BoardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ board?: string }>;
+}) {
   const supabase = await createClient();
 
   const {
@@ -15,26 +19,29 @@ export default async function BoardPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // 첫 로그인이면 보드를 하나 만들어 준다.
-  let { data: board } = await supabase
+  // 사용자의 모든 보드 (전환 UI 용). 없으면 기본 보드를 하나 만든다.
+  let { data: boards } = await supabase
     .from("boards")
-    .select("*")
+    .select("id, title, created_at")
     .eq("user_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
-  if (!board) {
+  if (!boards || boards.length === 0) {
     const { data: created, error } = await supabase
       .from("boards")
       .insert({ user_id: user.id, title: "내 보드" })
-      .select()
+      .select("id, title, created_at")
       .single();
     if (error || !created) {
       throw new Error(`보드를 만들지 못했습니다: ${error?.message ?? "알 수 없는 오류"}`);
     }
-    board = created;
+    boards = [created];
   }
+
+  // 쿼리의 board id 가 내 보드면 그걸, 아니면 가장 오래된 보드를 연다.
+  const { board: boardParam } = await searchParams;
+  const board =
+    boards.find((b) => b.id === boardParam) ?? boards[0];
 
   const [framesRes, itemsRes, edgesRes, tagsRes, itemTagsRes] = await Promise.all([
     supabase.from("frames").select("*").eq("board_id", board.id),
@@ -73,6 +80,7 @@ export default async function BoardPage() {
     <BoardClient
       boardId={board.id}
       boardTitle={board.title}
+      boards={boards.map((b) => ({ id: b.id, title: b.title }))}
       userId={user.id}
       userEmail={user.email ?? ""}
       items={items}

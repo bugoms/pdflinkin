@@ -18,6 +18,7 @@ import Viewer from "./Viewer";
 export default function BoardClient(props: {
   boardId: string;
   boardTitle: string;
+  boards: { id: string; title: string }[];
   userId: string;
   userEmail: string;
   items: ItemRow[];
@@ -65,7 +66,9 @@ export default function BoardClient(props: {
         <Canvas onOpenSearch={() => setSearchOpen(true)} />
 
         <Toolbar
-          boardTitle={props.boardTitle}
+          boardId={props.boardId}
+          boards={props.boards}
+          userId={props.userId}
           userEmail={props.userEmail}
           onOpenSearch={() => setSearchOpen(true)}
           onOpenTrash={() => setTrashOpen(true)}

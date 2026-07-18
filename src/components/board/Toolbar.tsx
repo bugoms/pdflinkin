@@ -9,16 +9,21 @@ import { extractUrls } from "@/lib/url";
 import { flush, useBoard } from "@/store/board";
 import { useSelection } from "@/store/selection";
 
+import BoardSwitcher from "./BoardSwitcher";
 import { useBoardActions } from "./useBoardActions";
 import { useIngest } from "./useIngest";
 
 export default function Toolbar({
-  boardTitle,
+  boardId,
+  boards,
+  userId,
   userEmail,
   onOpenSearch,
   onOpenTrash,
 }: {
-  boardTitle: string;
+  boardId: string;
+  boards: { id: string; title: string }[];
+  userId: string;
   userEmail: string;
   onOpenSearch: () => void;
   onOpenTrash: () => void;
@@ -39,20 +44,23 @@ export default function Toolbar({
   );
 
   const [url, setUrl] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
+  // 한 번에 하나의 드롭다운만 열린다 (보드 전환 / 햄버거 메뉴 상호배제)
+  const [openPanel, setOpenPanel] = useState<null | "board" | "menu">(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
 
-  // 메뉴 밖 어디를 눌러도(캔버스의 카드·그룹 포함) 즉시 닫는다.
+  // 패널 밖 어디를 눌러도(캔버스의 카드·그룹 포함) 즉시 닫는다.
   // 오버레이 div 방식은 헤더의 backdrop-filter 가 fixed 기준을 가로채 동작하지 않았다.
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!openPanel) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+      const node = e.target as Node;
+      const inMenu = menuRef.current?.contains(node);
+      const inBoard = boardRef.current?.contains(node);
+      if (!inMenu && !inBoard) setOpenPanel(null);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key === "Escape") setOpenPanel(null);
     };
     document.addEventListener("pointerdown", onPointerDown, true);
     window.addEventListener("keydown", onKey);
@@ -60,7 +68,7 @@ export default function Toolbar({
       document.removeEventListener("pointerdown", onPointerDown, true);
       window.removeEventListener("keydown", onKey);
     };
-  }, [menuOpen]);
+  }, [openPanel]);
 
   /** 화면 한가운데의 캔버스 좌표 */
   function center() {
@@ -88,12 +96,22 @@ export default function Toolbar({
   return (
     <>
     <header className="glass-float absolute inset-x-2 top-2 z-30 flex h-[52px] items-center gap-2 rounded-full pl-5 pr-3 sm:inset-x-4 sm:px-5">
-      <span className="shrink-0 select-none whitespace-nowrap text-[19px] font-semibold tracking-[-0.02em] text-ink">
+      <span className="hidden shrink-0 select-none whitespace-nowrap text-[19px] font-semibold tracking-[-0.02em] text-ink sm:inline">
         LinkScape
       </span>
-      <span className="hidden whitespace-nowrap text-[14px] text-ink-48 xl:inline">
-        {boardTitle}
-      </span>
+
+      <BoardSwitcher
+        boardId={boardId}
+        boards={boards}
+        userId={userId}
+        open={openPanel === "board"}
+        onToggle={() => {
+          useSelection.getState().clear();
+          setOpenPanel((p) => (p === "board" ? null : "board"));
+        }}
+        onClose={() => setOpenPanel(null)}
+        rootRef={boardRef}
+      />
 
       {/* 검색·입력은 pill — "액션"의 문법. 좁은 화면에선 남는 폭을 전부 쓴다 */}
       <form onSubmit={submitUrl} className="min-w-0 flex-1 sm:ml-2 lg:max-w-80">
@@ -134,11 +152,11 @@ export default function Toolbar({
         <div className="relative" ref={menuRef}>
           <button
             aria-label="메뉴"
-            aria-expanded={menuOpen}
+            aria-expanded={openPanel === "menu"}
             onClick={() => {
               // 카드/그룹 설정창(인스펙터)이 떠 있으면 선택을 풀어 닫고 메뉴를 연다
               useSelection.getState().clear();
-              setMenuOpen((v) => !v);
+              setOpenPanel((p) => (p === "menu" ? null : "menu"));
             }}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-divider bg-pearl text-ink-80 transition hover:bg-parchment"
           >
@@ -152,13 +170,13 @@ export default function Toolbar({
             </svg>
           </button>
 
-          {menuOpen && (
+          {openPanel === "menu" && (
             <>
               <div className="glass-float absolute right-0 top-[calc(100%+10px)] z-50 w-60 overflow-hidden rounded-apple-lg py-1.5">
                 <MenuItem
                   hint="Ctrl+K"
                   onClick={() => {
-                    setMenuOpen(false);
+                    setOpenPanel(null);
                     onOpenSearch();
                   }}
                 >
@@ -166,7 +184,7 @@ export default function Toolbar({
                 </MenuItem>
                 <MenuItem
                   onClick={() => {
-                    setMenuOpen(false);
+                    setOpenPanel(null);
                     onOpenTrash();
                   }}
                 >

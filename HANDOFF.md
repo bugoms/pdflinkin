@@ -118,6 +118,13 @@ whale-extension/              ★ 웨일/크롬 확장 (전체가 순수 JS)
 
 ## 6. 남아 있는 것 / 미완성
 
+### 여러 보드 (2026-07-18)
+- `/board?board=<id>` 로 활성 보드 선택. `board/page.tsx` 가 `searchParams`(Next 16 = await Promise)에서 읽어 소유 보드면 로드, 아니면 가장 오래된 보드
+- 툴바 `BoardSwitcher`(LinkScape 로고 옆 pill): 보드 목록·전환·이름변경(인라인)·삭제(confirm)·생성. 햄버거 메뉴와 `openPanel` 로 상호배제
+- **전환·생성·삭제는 `await flush()` 후 `router.push`** — 저장 큐가 전역 1개라 flush 없이 이동하면 이전 보드 변경분 유실
+- 보드 생성/이름변경/삭제는 supabase 브라우저 클라이언트로 직접 write(스냅샷 큐 예외 — boards 는 카드/프레임/엣지 아님)
+- **한계**: 보드 삭제 시 스토리지 파일은 cascade 안 됨(고아 파일 잔존). 카드/프레임/엣지 행은 FK cascade 로 삭제됨
+
 ### 알려진 한계 (동작엔 문제 없음)
 - 확장으로 담은 링크 카드는 **OG 메타 없음** (호스트명+파비콘만). `/api/unfurl` 은 쿠키 세션 기반이라 확장에서 못 씀
 - 확장으로 담은 카드는 보드를 **새로고침해야** 보임 (realtime 미구현)
