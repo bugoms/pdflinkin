@@ -159,8 +159,10 @@ export default function Canvas({ onOpenSearch }: { onOpenSearch: () => void }) {
         height: item.h,
         measured: { width: item.w, height: item.h },
         selected: selectedNodeIds.has(item.id),
+        // parentId 로 프레임과 함께 움직이되, extent(=parent)는 주지 않는다.
+        // extent 를 주면 카드가 프레임 경계 밖으로 못 나가 그룹에서 뺄 수 없다.
+        // 밖으로 드래그하면 settleDrag 가 frame_id 를 null 로 정리한다.
         parentId: item.frame_id && frames[item.frame_id] ? item.frame_id : undefined,
-        extent: item.frame_id && frames[item.frame_id] ? ("parent" as const) : undefined,
         zIndex: 1,
         data: {
           item,
