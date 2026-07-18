@@ -21,7 +21,7 @@
 
 **웨일 확장 (`whale-extension/`, 순수 MV3 — 빌드 없음, 크롬 겸용)**
 - 팝업: 현재 탭 담기 · Ctrl+V(링크/이미지/텍스트→메모) · PDF·이미지 드롭 (URL 입력 칸은 제거함)
-- **목록 보기**: 그룹별 묶음(검은 ㄴ자 종속 표시) + 색 순서 정렬 + 키워드 검색(PDF 본문 포함)
+- **목록 보기**: **보드별 헤더**(모든 보드 조회) → 그룹별 묶음(ㄴ자 종속) + 색 순서 정렬 + 키워드 검색(PDF 본문 포함) + 행 hover 삭제(휴지통)
 - 우클릭 메뉴 4종: 링크/이미지/선택 텍스트/페이지 담기 (배지 ✓/! 피드백)
 - **페이지 드롭존**: 아무 페이지에서 드래그 시작하면 우하단에 드롭 타겟 등장 (Shadow DOM)
 - 이미지는 실제 다운로드+썸네일 업로드 (실패 시 핫링크 폴백)
@@ -125,9 +125,15 @@ whale-extension/              ★ 웨일/크롬 확장 (전체가 순수 JS)
 - 보드 생성/이름변경/삭제는 supabase 브라우저 클라이언트로 직접 write(스냅샷 큐 예외 — boards 는 카드/프레임/엣지 아님)
 - **한계**: 보드 삭제 시 스토리지 파일은 cascade 안 됨(고아 파일 잔존). 카드/프레임/엣지 행은 FK cascade 로 삭제됨
 
+### 실시간 반영 (Realtime, 2026-07-18)
+- `useRealtime(boardId)`([BoardClient](src/components/board/BoardClient.tsx)에서 호출)가 현재 보드의 items/frames/edges 를 구독 → 확장/다른 탭에서 담은 카드가 **새로고침 없이** 뜬다
+- **저장이 아니라 표시 갱신**: 수신은 `applyRemote` 로만 반영(저장 큐 enqueueDiff·언두 스택 안 탐) → **에코 루프 없음**
+- 에코/충돌 방지: `hasPending(table,id)`(내가 방금 쓴 것)·`interaction`(드래그 중)이면 스킵. items 의 `extracted_text` 는 항상 null
+- **★ 함정**: realtime 은 **구독 전에** `supabase.realtime.setAuth(token)` 를 해야 한다. 인증 없이 subscribe 하면 채널이 anon 으로 맺어져 RLS 가 이벤트를 전부 막는다(증상: 구독은 SUBSCRIBED 인데 이벤트 0). getSession→setAuth→subscribe 순서 유지
+- **전제(1회 실행 완료)**: `supabase/migrations/0002_realtime.sql` — items/frames/edges 를 publication 에 추가 + REPLICA IDENTITY FULL(DELETE old 에 board_id 실림). publication 변경은 realtime 서비스가 반영하는 데 수 초 걸린다
+
 ### 알려진 한계 (동작엔 문제 없음)
 - 확장으로 담은 링크 카드는 **OG 메타 없음** (호스트명+파비콘만). `/api/unfurl` 은 쿠키 세션 기반이라 확장에서 못 씀
-- 확장으로 담은 카드는 보드를 **새로고침해야** 보임 (realtime 미구현)
 - 확장 목록/검색 결과 클릭 = 그 문서/링크 자체를 새 탭으로 연다 (링크는 url, 업로드 파일은 `signStorageUrl` 서명 URL, 메모 등은 보드 폴백). 보드 카드로의 딥링크(`/board?item=<id>` → setCenter)는 아직 없음
 - 태그 입력 UI 는 제거됨 (사용자 요청). 필터바 코드·DB 스키마는 남아 있음
 - Next 16 `middleware.ts` deprecation 경고 (동작 무관, 방치 중)
@@ -179,6 +185,7 @@ whale-extension/              ★ 웨일/크롬 확장 (전체가 순수 JS)
 - **`zoomOnDoubleClick={false}` 유지**, `deleteKeyCode={null}`, 프레임 노드가 배열에서 자식보다 앞
 - `dimensions` 변경은 `setAttributes` true 일 때만 반영
 - **선택 올가미**(빈 곳 드래그 = Partial 선택)는 데스크톱 전용 — `isMobile`(pointer:coarse 또는 <640px) 이면 드래그=팬
+- **프레임 자식 카드에 `extent:"parent"` 주지 말 것**(2026-07-18): 주면 카드가 경계 밖으로 못 나가 그룹에서 뺄 수 없다. `parentId`(함께 이동)만 주고, 밖으로 드래그하면 `settleDrag` 가 `frame_id=null` 로 정리한다
 - **그룹 올가미**(2026-07-18): 툴바 "그룹 ▾" → 사각형/자유형 선택 → `useGroupMode` 로 모드 켜짐 →
   `GroupLasso` 오버레이(z-10, 캔버스 위)가 영역을 받아 **감싼 카드(중심점 기준)를 새 프레임에 재소속**.
   자유형은 `pointInPolygon`(홀짝, 자동 폐합)으로 판정. 프레임 생성+재소속은 단일 `apply()`=언두 1스텝.

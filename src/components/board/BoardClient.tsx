@@ -13,6 +13,7 @@ import SearchPalette from "./SearchPalette";
 import Toolbar from "./Toolbar";
 import TrashPanel from "./TrashPanel";
 import { usePdfBackfill } from "./usePdfBackfill";
+import { useRealtime } from "./useRealtime";
 import Viewer from "./Viewer";
 
 export default function BoardClient(props: {
@@ -50,6 +51,9 @@ export default function BoardClient(props: {
 
   // 확장 등에서 썸네일 없이 올라온 PDF 를 열람 시점에 보정한다
   usePdfBackfill();
+
+  // 확장/다른 기기에서 담은 카드가 새로고침 없이 나타나게 한다
+  useRealtime(props.boardId);
 
   // 스토어 기준으로 실시간 판정 — 첫 카드가 생기는 순간 안내가 사라진다.
   // (init 전에는 boardId 가 비어 있으므로 잘못 떠 있지 않는다)

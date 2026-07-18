@@ -166,6 +166,8 @@ type BoardState = Snapshot & {
   apply(recipe: (draft: Snapshot) => void): void;
   /** 히스토리에도 저장 큐에도 넣지 않는 변경 (드래그 중 위치 등) */
   applyLive(recipe: (draft: Snapshot) => void): void;
+  /** 원격(realtime) 수신을 표시에만 반영 — 저장 큐·언두를 절대 타지 않는다 */
+  applyRemote(recipe: (draft: Snapshot) => void): void;
 
   beginInteraction(): void;
   endInteraction(): void;
@@ -235,6 +237,14 @@ export const useBoard = create<BoardState>((set, get) => ({
   },
 
   applyLive: (recipe) => {
+    const draft = snapshot(get());
+    recipe(draft);
+    set(draft);
+  },
+
+  // applyLive 와 동작은 같지만 "원격 수신 표시용"임을 이름으로 분리한다.
+  // 저장 큐(enqueueDiff)·언두 스택을 건드리지 않으므로 에코 루프가 없다.
+  applyRemote: (recipe) => {
     const draft = snapshot(get());
     recipe(draft);
     set(draft);
@@ -384,4 +394,9 @@ export function installFlushOnUnload() {
 
 export function hasPendingWrites() {
   return queue.size > 0;
+}
+
+/** 이 행이 아직 저장 큐에 대기 중인가 — realtime 에코(내가 방금 쓴 것) 무시에 쓴다 */
+export function hasPending(table: Table, id: string) {
+  return queue.has(`${table}:${id}`);
 }
