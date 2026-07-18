@@ -221,6 +221,41 @@ header .text-action {
   color: var(--ink-48);
 }
 
+/* 보드 헤더 — 목록 최상위 구분(어느 보드인지) */
+#item-list .board-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 12px 6px;
+  border-top: 1px solid var(--hairline);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+#item-list .board-header:first-child {
+  border-top: none;
+}
+
+#item-list .board-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--ink-48);
+}
+
+#item-list .board-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+#item-list .board-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* 그룹(프레임) 헤더 */
 #item-list .group-header {
   display: flex;

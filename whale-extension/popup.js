@@ -188,8 +188,10 @@ function bindMain() {
 
   const searchInput = $("#search-input");
   const listEl = $("#item-list");
-  let allItems = []; // 목록 보기를 열 때마다 새로 받는 전체 카드
-  let allFrames = []; // 그룹(프레임) 목록
+  let allItems = []; // 목록 보기를 열 때마다 새로 받는 전체 카드(모든 보드)
+  let allFrames = []; // 그룹(프레임) 목록(모든 보드)
+  let allBoards = []; // 내 보드 목록
+  let boardsById = {}; // board_id → 보드 제목
   let searchTimer = null;
 
   /** "#rrggbb" 는 웹의 컬러 피커로 직접 고른 커스텀 색 */
@@ -323,6 +325,25 @@ function bindMain() {
     return li;
   }
 
+  function boardHeader(title) {
+    const li = document.createElement("li");
+    li.className = "board-header";
+
+    const icon = document.createElement("span");
+    icon.className = "board-icon";
+    icon.innerHTML =
+      '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+      '<rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>' +
+      '<path d="M2 6.2h12" stroke="currentColor" stroke-width="1.2"/></svg>';
+
+    const name = document.createElement("span");
+    name.className = "board-name";
+    name.textContent = title;
+
+    li.append(icon, name);
+    return li;
+  }
+
   function emptyRow(message) {
     const li = document.createElement("li");
     li.className = "empty";
@@ -330,7 +351,42 @@ function bindMain() {
     return li;
   }
 
-  /** 전체 목록 — 그룹별로 묶고, 각 묶음 안은 색깔 순서로 */
+  /** 한 보드 안의 카드를 그룹(프레임)별로 그린다 */
+  function renderBoardBody(boardItems, boardFrames) {
+    const frameIds = new Set(boardFrames.map((f) => f.id));
+    const grouped = new Map(); // frame_id → items
+    const loose = [];
+    for (const item of boardItems) {
+      if (item.frame_id && frameIds.has(item.frame_id)) {
+        if (!grouped.has(item.frame_id)) grouped.set(item.frame_id, []);
+        grouped.get(item.frame_id).push(item);
+      } else {
+        loose.push(item);
+      }
+    }
+    for (const frame of boardFrames) {
+      const children = grouped.get(frame.id) ?? [];
+      listEl.append(
+        groupHeader(frame.title || "무제 그룹", frame.color ?? "sky", children.length),
+      );
+      for (const item of sortByColor(children)) listEl.append(itemRow(item, true));
+    }
+    for (const item of sortByColor(loose)) listEl.append(itemRow(item, false));
+  }
+
+  /** 보드 순서 — 보드 목록 순, 목록에 없는 board_id 는 뒤에 */
+  function boardOrderKeys(rows) {
+    const order = allBoards.map((b) => b.id);
+    const extra = [];
+    for (const r of rows) {
+      if (r.board_id && !order.includes(r.board_id) && !extra.includes(r.board_id)) {
+        extra.push(r.board_id);
+      }
+    }
+    return [...order, ...extra];
+  }
+
+  /** 전체 목록 — 보드별로 묶고, 보드 안은 그룹(프레임)별 · 색깔 순서로 */
   function renderGrouped() {
     listEl.textContent = "";
 
@@ -339,44 +395,30 @@ function bindMain() {
       return;
     }
 
-    const frameIds = new Set(allFrames.map((f) => f.id));
-    const grouped = new Map(); // frame_id → items
-    const loose = [];
-    for (const item of allItems) {
-      if (item.frame_id && frameIds.has(item.frame_id)) {
-        if (!grouped.has(item.frame_id)) grouped.set(item.frame_id, []);
-        grouped.get(item.frame_id).push(item);
-      } else {
-        loose.push(item);
-      }
-    }
+    for (const bId of boardOrderKeys([...allItems, ...allFrames])) {
+      const boardItems = allItems.filter((it) => it.board_id === bId);
+      const boardFrames = allFrames.filter((f) => f.board_id === bId);
+      if (boardItems.length === 0 && boardFrames.length === 0) continue;
 
-    for (const frame of allFrames) {
-      const children = grouped.get(frame.id) ?? [];
-      listEl.append(
-        groupHeader(frame.title || "무제 그룹", frame.color ?? "sky", children.length),
-      );
-      for (const item of sortByColor(children)) {
-        listEl.append(itemRow(item, true));
-      }
-    }
-
-    if (loose.length > 0) {
-      if (allFrames.length > 0) {
-        listEl.append(groupHeader("그룹 밖", "neutral", loose.length));
-      }
-      for (const item of sortByColor(loose)) listEl.append(itemRow(item, false));
+      listEl.append(boardHeader(boardsById[bId] || "무제 보드"));
+      renderBoardBody(boardItems, boardFrames);
     }
   }
 
-  /** 검색 결과 — 그룹 구분 없이 색깔 순서로 */
+  /** 검색 결과 — 보드별로 묶고, 보드 안은 색깔 순서로 */
   function renderSearch(hits) {
     listEl.textContent = "";
     if (hits.length === 0) {
       listEl.append(emptyRow("결과가 없습니다"));
       return;
     }
-    for (const item of sortByColor(hits)) listEl.append(itemRow(item));
+
+    for (const bId of boardOrderKeys(hits)) {
+      const boardHits = hits.filter((h) => h.board_id === bId);
+      if (boardHits.length === 0) continue;
+      listEl.append(boardHeader(boardsById[bId] || "무제 보드"));
+      for (const item of sortByColor(boardHits)) listEl.append(itemRow(item, false));
+    }
   }
 
   async function openList() {
@@ -387,10 +429,12 @@ function bindMain() {
 
     try {
       await ready();
-      [allItems, allFrames] = await Promise.all([
-        api.listItems(session, boardId),
-        api.listFrames(session, boardId),
+      [allItems, allFrames, allBoards] = await Promise.all([
+        api.listItems(session),
+        api.listFrames(session),
+        api.listBoards(session),
       ]);
+      boardsById = Object.fromEntries(allBoards.map((b) => [b.id, b.title]));
       renderGrouped();
     } catch {
       listEl.textContent = "";
@@ -401,7 +445,7 @@ function bindMain() {
   async function runSearch(term) {
     try {
       await ready();
-      const hits = await api.searchItems(session, boardId, term);
+      const hits = await api.searchItems(session, term);
       if (searchInput.value.trim() !== term) return; // 뒤늦은 응답 무시
       renderSearch(hits);
     } catch {

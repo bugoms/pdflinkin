@@ -183,7 +183,7 @@ function extractUrls(text) {
 
 /** 보드 안 키워드 검색 — 웹사이트 SearchPalette 와 같은 대상(제목·설명·메모·
  * 파일명·URL·PDF 본문)을 부분일치로 찾는다. */
-async function searchItems(session, boardId, rawTerm) {
+async function searchItems(session, rawTerm) {
   // PostgREST 의 or() 필터를 깨뜨리는 문자를 제거한다 (웹과 동일 규칙)
   const term = rawTerm.replace(/[,()*\\"']/g, " ").trim();
   if (!term) return [];
@@ -200,21 +200,26 @@ async function searchItems(session, boardId, rawTerm) {
     .map((field) => `${field}.ilike.${like}`)
     .join(",");
 
+  // 모든 보드에서 검색 (RLS 가 내 것으로 한정). board_id 로 어느 보드인지 표시
   return rest(
     session,
-    `items?select=id,kind,title,file_name,note,domain,color,url,storage_path,og_image_url` +
-      `&board_id=eq.${boardId}&status=eq.active` +
+    `items?select=id,kind,title,file_name,note,domain,color,url,storage_path,og_image_url,board_id` +
+      `&status=eq.active` +
       `&or=${encodeURIComponent(`(${orExpr})`)}&limit=20`,
   );
 }
 
-/** 보드의 활성 카드 전체 (목록 보기용) */
-async function listItems(session, boardId) {
+/** 내 모든 보드 (목록 보기의 보드 구분용) */
+async function listBoards(session) {
+  return rest(session, `boards?select=id,title&order=created_at.asc`);
+}
+
+/** 내 모든 보드의 활성 카드 (목록 보기용). board_id 포함 */
+async function listItems(session) {
   return rest(
     session,
-    `items?select=id,kind,title,file_name,note,color,frame_id,url,storage_path,og_image_url` +
-      `&board_id=eq.${boardId}&status=eq.active` +
-      `&order=created_at.desc&limit=300`,
+    `items?select=id,kind,title,file_name,note,color,frame_id,url,storage_path,og_image_url,board_id` +
+      `&status=eq.active&order=created_at.desc&limit=500`,
   );
 }
 
@@ -240,11 +245,11 @@ async function signStorageUrl(session, path, expiresIn = 3600) {
   return rel ? `${LS_CONFIG.SUPABASE_URL}/storage/v1${rel}` : null;
 }
 
-/** 보드의 그룹(프레임) 전체 */
-async function listFrames(session, boardId) {
+/** 내 모든 보드의 그룹(프레임) 전체. board_id 포함 */
+async function listFrames(session) {
   return rest(
     session,
-    `frames?select=id,title,color&board_id=eq.${boardId}&order=created_at.asc`,
+    `frames?select=id,title,color,board_id&order=created_at.asc`,
   );
 }
 
@@ -428,6 +433,7 @@ const api = {
   normalizeUrl,
   hostname,
   searchItems,
+  listBoards,
   listItems,
   listFrames,
   trashItem,
