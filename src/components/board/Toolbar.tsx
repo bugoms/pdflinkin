@@ -21,6 +21,7 @@ export default function Toolbar({
   userEmail,
   onOpenSearch,
   onOpenTrash,
+  onOpenList,
 }: {
   boardId: string;
   boards: { id: string; title: string }[];
@@ -28,6 +29,7 @@ export default function Toolbar({
   userEmail: string;
   onOpenSearch: () => void;
   onOpenTrash: () => void;
+  onOpenList: () => void;
 }) {
   const router = useRouter();
   const { screenToFlowPosition } = useReactFlow();
@@ -244,6 +246,14 @@ export default function Toolbar({
                   }}
                 >
                   검색
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setOpenPanel(null);
+                    onOpenList();
+                  }}
+                >
+                  목록 보기
                 </MenuItem>
                 <MenuItem
                   onClick={() => {

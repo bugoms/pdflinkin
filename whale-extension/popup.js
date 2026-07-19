@@ -226,7 +226,7 @@ function bindMain() {
     else window.open(url, "_blank", "noreferrer");
   }
 
-  /** 목록에서 카드를 누르면 그 문서/링크 자체를 연다 (보드가 아니라). */
+  /** 행 클릭 = 그 문서/링크 자체를 연다 (보드가 아니라). */
   async function openItem(item) {
     // 1) 링크 카드 — url 로 바로 이동 (http 이미지 링크는 og_image_url 폴백)
     const isHttp = (u) => typeof u === "string" && /^https?:\/\//.test(u);
@@ -248,8 +248,19 @@ function bindMain() {
         /* 실패하면 아래 보드 폴백 */
       }
     }
-    // 3) 메모 등 열 대상이 없으면 보드를 연다
-    openTab(`${LS_CONFIG.WEB_URL}/board`);
+    // 3) 메모 등 열 대상이 없으면 그 카드가 있는 보드로 이동한다
+    openOnBoard(item);
+  }
+
+  /** 보조(↦ 보드에서 보기): 그 카드가 있는 보드로 이동해 위치를 보여준다(딥링크).
+   *  웹이 ?item=… 을 받아 해당 카드로 화면을 옮기고 선택한다. */
+  function openOnBoard(item) {
+    const board = item.board_id
+      ? `board=${encodeURIComponent(item.board_id)}&`
+      : "";
+    openTab(
+      `${LS_CONFIG.WEB_URL}/board?${board}item=${encodeURIComponent(item.id)}`,
+    );
   }
 
   function itemRow(item, isChild) {
@@ -273,8 +284,21 @@ function bindMain() {
     title.textContent = item.title || item.file_name || item.note || "제목 없음";
 
     button.append(dot, title);
-    button.addEventListener("click", () => {
-      void openItem(item);
+    button.addEventListener("click", () => void openItem(item));
+
+    // 보드에서 보기(딥링크) — 행에 마우스를 올리면 삭제 왼쪽에 나타난다.
+    const jump = document.createElement("button");
+    jump.type = "button";
+    jump.className = "row-open-board";
+    jump.title = "보드에서 보기";
+    jump.setAttribute("aria-label", "보드에서 보기");
+    jump.innerHTML =
+      '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+      '<rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>' +
+      '<circle cx="8" cy="8" r="2" fill="currentColor"/></svg>';
+    jump.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openOnBoard(item);
     });
 
     // 삭제(휴지통) — 행에 마우스를 올리면 나타난다. 확인창 없이 바로 휴지통행.
@@ -303,7 +327,7 @@ function bindMain() {
       }
     });
 
-    li.append(button, del);
+    li.append(button, jump, del);
     return li;
   }
 

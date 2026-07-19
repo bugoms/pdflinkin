@@ -77,8 +77,15 @@ function isTypingTarget(target: EventTarget | null): boolean {
   );
 }
 
-export default function Canvas({ onOpenSearch }: { onOpenSearch: () => void }) {
-  const { screenToFlowPosition, fitView, getViewport } = useReactFlow();
+export default function Canvas({
+  onOpenSearch,
+  focusItemId,
+}: {
+  onOpenSearch: () => void;
+  focusItemId?: string | null;
+}) {
+  const { screenToFlowPosition, fitView, getViewport, setCenter } =
+    useReactFlow();
 
   const items = useBoard((s) => s.items);
   const frames = useBoard((s) => s.frames);
@@ -118,6 +125,8 @@ export default function Canvas({ onOpenSearch }: { onOpenSearch: () => void }) {
   /** 우클릭이 제자리 클릭(메뉴)이었는지 판단하기 위한 눌린 위치 */
   const rightDownRef = useRef<{ x: number; y: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  /** 딥링크(?item=…) 포커스는 보드당 한 번만 */
+  const focusedRef = useRef(false);
 
   /* --------------------------------------------------------------------- */
   /* 노드 / 엣지 유도                                                        */
@@ -313,6 +322,30 @@ export default function Canvas({ onOpenSearch }: { onOpenSearch: () => void }) {
     },
     [applyLive, endInteraction],
   );
+
+  /* --------------------------------------------------------------------- */
+  /* 딥링크 포커스 (?item=…)                                                 */
+  /* --------------------------------------------------------------------- */
+
+  // 확장·웹 목록에서 카드를 클릭해 들어오면 그 카드로 화면을 옮기고 선택한다.
+  // 바로 열지 않고 위치를 보여준다 — "그 근처에 있었지"가 이 앱의 핵심이다.
+  useEffect(() => {
+    if (!focusItemId || focusedRef.current) return;
+    const state = useBoard.getState();
+    const item = state.items[focusItemId];
+    if (!item || item.status !== "active") return; // 아직 로딩 전이면 다음 렌더에 다시 시도
+    focusedRef.current = true;
+
+    useSelection.getState().selectOnly(item.id);
+
+    const frame = item.frame_id ? state.frames[item.frame_id] : undefined;
+    const cx = (frame?.x ?? 0) + item.x + item.w / 2;
+    const cy = (frame?.y ?? 0) + item.y + item.h / 2;
+    void setCenter(cx, cy, { zoom: 1.1, duration: 600 });
+
+    // 새로고침·재렌더에 다시 튀어오르지 않도록 URL 에서 item 파라미터를 지운다.
+    window.history.replaceState(null, "", `/board?board=${state.boardId}`);
+  }, [focusItemId, items, setCenter]);
 
   /* --------------------------------------------------------------------- */
   /* 붙여넣기 / 드롭 / 단축키                                                */
@@ -616,7 +649,8 @@ export default function Canvas({ onOpenSearch }: { onOpenSearch: () => void }) {
         zoomOnPinch
         minZoom={0.1}
         maxZoom={2.5}
-        fitView
+        /* 딥링크로 특정 카드에 포커스할 땐 전체 맞춤을 끄고 그 카드로 바로 이동 */
+        fitView={!focusItemId}
         fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
         proOptions={{ hideAttribution: true }}
         className="bg-parchment"

@@ -341,6 +341,39 @@ header .text-action {
   height: 15px;
 }
 
+/* 보드에서 보기(딥링크) — 삭제 왼쪽에, 행 hover 시 등장 */
+#item-list .row-open-board {
+  position: absolute;
+  right: 38px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  color: var(--ink-48);
+  background: transparent;
+  opacity: 0;
+  transition: opacity 120ms ease, background 120ms ease, color 120ms ease;
+}
+
+#item-list li:hover .row-open-board {
+  opacity: 1;
+}
+
+#item-list .row-open-board:hover {
+  background: var(--parchment);
+  color: var(--ink-80);
+}
+
+#item-list .row-open-board svg {
+  width: 15px;
+  height: 15px;
+}
+
 /* 그룹 소속 문서 — 그룹 헤더와 같은 색의 ㄴ자 연결선으로 종속 표시 */
 #item-list li.child button {
   padding-left: 18px;

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { removePaths } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/client";
 import { flush } from "@/store/board";
 
@@ -102,7 +103,20 @@ export default function BoardSwitcher({
     setBusy(true);
     try {
       await flush();
-      const { error } = await createClient().from("boards").delete().eq("id", id);
+      const supabase = createClient();
+
+      // DB 행(카드·프레임·엣지)은 FK cascade 로 지워지지만 스토리지 파일은
+      // 자동으로 지워지지 않는다 — 보드 삭제 전에 고아가 될 파일을 먼저 정리한다.
+      const { data: files } = await supabase
+        .from("items")
+        .select("storage_path, thumb_path")
+        .eq("board_id", id);
+      const paths = (files ?? [])
+        .flatMap((r) => [r.storage_path, r.thumb_path])
+        .filter((p): p is string => Boolean(p));
+      if (paths.length > 0) await removePaths(supabase, paths);
+
+      const { error } = await supabase.from("boards").delete().eq("id", id);
       if (error) throw error;
       const remaining = boards.filter((b) => b.id !== id);
       setBoards(remaining);

@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function BoardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ board?: string }>;
+  searchParams: Promise<{ board?: string; item?: string }>;
 }) {
   const supabase = await createClient();
 
@@ -39,9 +39,22 @@ export default async function BoardPage({
   }
 
   // 쿼리의 board id 가 내 보드면 그걸, 아니면 가장 오래된 보드를 연다.
-  const { board: boardParam } = await searchParams;
-  const board =
-    boards.find((b) => b.id === boardParam) ?? boards[0];
+  // `item` 딥링크(확장·웹 목록에서 카드로 이동)가 있으면 그 카드가 속한 보드를 먼저 연다.
+  const { board: boardParam, item: itemParam } = await searchParams;
+
+  let targetBoardId = boardParam;
+  if (itemParam) {
+    const { data: focusRow } = await supabase
+      .from("items")
+      .select("board_id")
+      .eq("id", itemParam)
+      .maybeSingle();
+    if (focusRow?.board_id) targetBoardId = focusRow.board_id;
+  }
+
+  const board = boards.find((b) => b.id === targetBoardId) ?? boards[0];
+  // 딥링크한 카드가 실제로 이 보드에 있을 때만 포커스 대상으로 넘긴다.
+  const focusItemId = itemParam && board.id === targetBoardId ? itemParam : null;
 
   const [framesRes, itemsRes, edgesRes, tagsRes, itemTagsRes] = await Promise.all([
     supabase.from("frames").select("*").eq("board_id", board.id),
@@ -83,6 +96,7 @@ export default async function BoardPage({
       boards={boards.map((b) => ({ id: b.id, title: b.title }))}
       userId={user.id}
       userEmail={user.email ?? ""}
+      focusItemId={focusItemId}
       items={items}
       frames={frames}
       edges={edges}

@@ -9,9 +9,11 @@ import { useSelection } from "@/store/selection";
 
 import Canvas from "./Canvas";
 import Inspector from "./Inspector";
+import ListPanel from "./ListPanel";
 import SearchPalette from "./SearchPalette";
 import Toolbar from "./Toolbar";
 import TrashPanel from "./TrashPanel";
+import { useLinkBackfill } from "./useLinkBackfill";
 import { usePdfBackfill } from "./usePdfBackfill";
 import { useRealtime } from "./useRealtime";
 import Viewer from "./Viewer";
@@ -22,6 +24,7 @@ export default function BoardClient(props: {
   boards: { id: string; title: string }[];
   userId: string;
   userEmail: string;
+  focusItemId: string | null;
   items: ItemRow[];
   frames: FrameRow[];
   edges: EdgeRow[];
@@ -32,6 +35,7 @@ export default function BoardClient(props: {
   const init = useBoard((s) => s.init);
   const [searchOpen, setSearchOpen] = useState(false);
   const [trashOpen, setTrashOpen] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
 
   useEffect(() => {
     init({
@@ -52,6 +56,9 @@ export default function BoardClient(props: {
   // 확장 등에서 썸네일 없이 올라온 PDF 를 열람 시점에 보정한다
   usePdfBackfill();
 
+  // 확장으로 담은 링크 카드(호스트명뿐)를 열람 시점에 OG 메타로 채운다
+  useLinkBackfill();
+
   // 확장/다른 기기에서 담은 카드가 새로고침 없이 나타나게 한다
   useRealtime(props.boardId);
 
@@ -67,7 +74,10 @@ export default function BoardClient(props: {
   return (
     <ReactFlowProvider>
       <div className="relative h-dvh">
-        <Canvas onOpenSearch={() => setSearchOpen(true)} />
+        <Canvas
+          focusItemId={props.focusItemId}
+          onOpenSearch={() => setSearchOpen(true)}
+        />
 
         <Toolbar
           boardId={props.boardId}
@@ -76,6 +86,7 @@ export default function BoardClient(props: {
           userEmail={props.userEmail}
           onOpenSearch={() => setSearchOpen(true)}
           onOpenTrash={() => setTrashOpen(true)}
+          onOpenList={() => setListOpen(true)}
         />
 
         <TagFilterBar />
@@ -85,6 +96,7 @@ export default function BoardClient(props: {
 
       {searchOpen && <SearchPalette onClose={() => setSearchOpen(false)} />}
       {trashOpen && <TrashPanel onClose={() => setTrashOpen(false)} />}
+      {listOpen && <ListPanel onClose={() => setListOpen(false)} />}
       <Viewer />
     </ReactFlowProvider>
   );
