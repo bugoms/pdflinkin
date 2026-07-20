@@ -212,8 +212,8 @@ app-plan.md                   ★ 앱화(모바일) 계획·진행 상태 (PWA·
   - 로컬 `.env.local` 에 실제 키(gitignore). **Vercel 에도 설정 완료**. anon key 는 공개 가능(방어는 RLS). `service_role` 절대 금지
 - **Supabase** `nfwthowdcyciorqabiae`: 마이그레이션 0001·0002 실행 완료, **이메일 확인 꺼짐**(가입 즉시 로그인).
   스키마/publication 변경은 `supabase/migrations/` 에 추가 후 **SQL Editor 에서 직접 실행**(CLI 없음, anon 키로 DDL 불가)
-- **배포**: https://pdflinkin.vercel.app (Vercel 프로젝트·GitHub 저장소명은 옛 이름 그대로)
-- **Git**: `https://github.com/bugoms/pdflinkin` (main). 한글 커밋 메시지는 **파일로 쓰고 `git commit -F`**
+- **배포**: https://pdflinkin.vercel.app (Vercel 프로젝트명·배포 URL 은 옛 이름 `pdflinkin` 그대로)
+- **Git**: `https://github.com/bugoms/linkscape` (main, GitHub 저장소는 `linkscape` 로 이름변경됨). 한글 커밋 메시지는 **파일로 쓰고 `git commit -F`**
 - **E2E**: `node <스크립트>` (puppeteer-core + `C:/Program Files/Google/Chrome/Application/chrome.exe` headless).
   스크립트는 매 작업마다 스크래치패드에 임시로 작성(커밋 안 함). 패턴: 로그인 → `.react-flow__pane` 대기 → 상호작용 → REST(anon+access_token)로 DB 확인 → 테스트 데이터 청소.
   테스트 계정 `pdflinkin.e2e.test@gmail.com`(비밀번호는 Claude 메모리 `linkscape-e2e-setup`). 실사용자 보드와 분리
