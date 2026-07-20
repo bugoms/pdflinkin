@@ -121,17 +121,27 @@ input:focus {
   opacity: 0.4;
 }
 
-/* 폴더에서 파일 선택 — 아웃라인 스타일(흰 배경 · 파란 텍스트/외곽선 · 12px 라운드) */
+/* 드롭존 안 "또는 파일 선택" — 별도 버튼이 아니라 링크 문법(파란 텍스트, 배경·외곽선 없음) */
+.dz-pick {
+  font-size: 13px;
+  color: var(--ink-48);
+  margin-top: 2px;
+}
+
 #pick-file {
-  border-radius: 12px;
-  background: var(--canvas);
+  font: inherit;
+  font-size: 13px;
   color: var(--action);
-  border: 1.5px solid var(--action);
-  font-weight: 500;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 #pick-file:hover {
-  background: #f2f7ff;
+  opacity: 0.75;
 }
 
 .error {
