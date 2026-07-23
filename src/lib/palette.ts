@@ -64,13 +64,15 @@ export const CARD_COLORS: Record<ColorToken, { card: string; swatch: string }> =
   },
 };
 
+/** 프레임 배경은 불투명 파스텔(흰색에 12% 섞은 고정 hex).
+ *  반투명 알파를 쓰면 뒤 캔버스 점무늬가 비쳐 영역이 흐릿해 보인다. */
 export const FRAME_COLORS: Record<ColorToken, { frame: string; title: string }> = {
-  neutral: { frame: "border-[#d2d2d7] bg-[#00000004]", title: "text-ink-48" },
-  sky: { frame: "border-[#b9d5f2] bg-[#0066cc08]", title: "text-[#2b6cb0]" },
-  emerald: { frame: "border-[#bcdcc7] bg-[#34a85308]", title: "text-[#2f7d54]" },
-  amber: { frame: "border-[#e6d3a6] bg-[#e5a83c0a]", title: "text-[#9a6b1a]" },
-  rose: { frame: "border-[#eec4c8] bg-[#e0687a0a]", title: "text-[#a54455]" },
-  violet: { frame: "border-[#cfc0ec] bg-[#8c6fe00a]", title: "text-[#63499f]" },
+  neutral: { frame: "border-[#d2d2d7] bg-[#ececef]", title: "text-ink-48" },
+  sky: { frame: "border-[#b9d5f2] bg-[#ebf4fe]", title: "text-[#2b6cb0]" },
+  emerald: { frame: "border-[#bcdcc7] bg-[#e9f5ee]", title: "text-[#2f7d54]" },
+  amber: { frame: "border-[#e6d3a6] bg-[#fcf4e8]", title: "text-[#9a6b1a]" },
+  rose: { frame: "border-[#eec4c8] bg-[#fbedef]", title: "text-[#a54455]" },
+  violet: { frame: "border-[#cfc0ec] bg-[#f1eefb]", title: "text-[#63499f]" },
 };
 
 export function cardColor(token: string | null | undefined) {

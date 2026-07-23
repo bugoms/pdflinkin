@@ -2,14 +2,15 @@
 
 import { useCallback } from "react";
 
-import { absolutePosition } from "@/lib/geometry";
+import {
+  absolutePosition,
+  fitFrameToChildren,
+  GROUP_PAD,
+} from "@/lib/geometry";
 import type { FrameRow } from "@/lib/types";
 import { makeFrame, useBoard } from "@/store/board";
 import { useSelection } from "@/store/selection";
 import { useViewer } from "@/store/viewer";
-
-/** 프레임이 카드들을 감쌀 때 두는 여백 (GroupLasso 와 동일) */
-const GROUP_PAD = 32;
 
 /** 선택 대상에 대한 공용 액션 — 툴바 버튼·키보드 단축키·우클릭 메뉴가 같이 쓴다. */
 export function useBoardActions() {
@@ -113,7 +114,7 @@ export function useBoardActions() {
   /** 선택한 카드들을 그룹(프레임)으로 묶는다.
    *  - 선택에 **기존 프레임이 있으면** 그 프레임에 카드들을 추가한다(기존 그룹에 넣기).
    *  - 없으면 카드들을 감싸는 **새 프레임**을 만든다.
-   *  프레임은 항상 자식 전부 + 여백을 담도록 키운다(줄이진 않음).
+   *  프레임은 자식 전부 + 여백에 맞게 유동적으로 커지거나 작아진다.
    *  카드가 하나도 선택돼 있지 않으면 null 을 돌려준다(호출측이 폴백). */
   const groupSelected = useCallback((): string | null => {
     const ids = [...useSelection.getState().nodeIds];
@@ -161,36 +162,8 @@ export function useBoardActions() {
         d.items[id] = { ...it, frame_id: frame.id, x: abs.x - frame.x, y: abs.y - frame.y };
       }
 
-      // 프레임을 자식 전부 + 여백을 담도록 키운다(줄이진 않음)
-      const kids = Object.values(d.items).filter(
-        (it) => it.frame_id === frame.id && it.status === "active",
-      );
-      let minX = frame.x;
-      let minY = frame.y;
-      let maxX = frame.x + frame.w;
-      let maxY = frame.y + frame.h;
-      for (const c of kids) {
-        const ax = frame.x + c.x;
-        const ay = frame.y + c.y;
-        minX = Math.min(minX, ax - GROUP_PAD);
-        minY = Math.min(minY, ay - GROUP_PAD);
-        maxX = Math.max(maxX, ax + c.w + GROUP_PAD);
-        maxY = Math.max(maxY, ay + c.h + GROUP_PAD);
-      }
-      const dx = frame.x - minX; // 원점이 왼/위로 밀린 양(>=0)
-      const dy = frame.y - minY;
-      if (dx !== 0 || dy !== 0) {
-        for (const c of kids) {
-          d.items[c.id] = { ...d.items[c.id], x: c.x + dx, y: c.y + dy };
-        }
-      }
-      d.frames[frame.id] = {
-        ...d.frames[frame.id],
-        x: minX,
-        y: minY,
-        w: maxX - minX,
-        h: maxY - minY,
-      };
+      // 프레임을 자식 전부 + 여백에 맞게 조정 (settleDrag 와 같은 규칙)
+      fitFrameToChildren(d, frame.id);
     });
 
     const sel = useSelection.getState();

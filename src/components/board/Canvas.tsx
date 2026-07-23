@@ -23,7 +23,14 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import { absolutePosition, frameAtPoint, toLocal, type Point } from "@/lib/geometry";
+import {
+  absolutePosition,
+  fitFrameToChildren,
+  frameAtPoint,
+  resolveOverlapInFrame,
+  toLocal,
+  type Point,
+} from "@/lib/geometry";
 import type { EdgeRow } from "@/lib/types";
 import { extractUrls } from "@/lib/url";
 import { useBoard } from "@/store/board";
@@ -31,6 +38,7 @@ import { useGroupMode } from "@/store/groupMode";
 import { useSelection } from "@/store/selection";
 
 import ContextMenu, { type MenuEntry } from "./ContextMenu";
+import DrawLayer from "./DrawLayer";
 import GroupLasso from "./GroupLasso";
 import FileNode from "./nodes/FileNode";
 import FrameNode from "./nodes/FrameNode";
@@ -297,10 +305,14 @@ export default function Canvas({
     [apply],
   );
 
-  /** 드래그가 끝나면 어느 프레임 위에 놓였는지 판정해서 소속을 바꾼다. */
+  /** 드래그가 끝나면 어느 프레임 위에 놓였는지 판정해서 소속을 바꾼다.
+   *  들어간 카드는 형제와 겹치지 않게 비켜 놓고, 소속이 바뀐 프레임은
+   *  자식에 맞춰 키우거나 줄인다 — 포함/제외가 즉시 눈에 보인다. */
   const settleDrag = useCallback(
     (dragged: AppNode[]) => {
       applyLive((d) => {
+        const touchedFrames = new Set<string>();
+
         for (const node of dragged) {
           if (node.type === "frame") continue;
           const item = d.items[node.id];
@@ -312,6 +324,7 @@ export default function Canvas({
           const targetId = target?.id ?? null;
           if (targetId === item.frame_id) continue;
 
+          if (item.frame_id) touchedFrames.add(item.frame_id);
           const local = toLocal(abs, target);
           d.items[item.id] = {
             ...item,
@@ -319,7 +332,13 @@ export default function Canvas({
             x: local.x,
             y: local.y,
           };
+          if (targetId) {
+            resolveOverlapInFrame(d, item.id);
+            touchedFrames.add(targetId);
+          }
         }
+
+        for (const frameId of touchedFrames) fitFrameToChildren(d, frameId);
       });
       endInteraction();
     },
@@ -703,6 +722,11 @@ export default function Canvas({
 
       {(groupLassoMode === "rect" || groupLassoMode === "free") && (
         <GroupLasso mode={groupLassoMode} onDone={() => setGroupMode(null)} />
+      )}
+
+      {/* 그리기(펜) 모드 — 완료하면 그린 자리에 이미지 카드가 된다 */}
+      {groupLassoMode === "draw" && (
+        <DrawLayer onDone={() => setGroupMode(null)} />
       )}
 
       {/* 묶기(pick) 모드 안내 바 — 카드를 탭해 고르고 완료 */}

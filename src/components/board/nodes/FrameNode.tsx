@@ -13,7 +13,7 @@ export default function FrameNode({ data, selected }: NodeProps<FrameNodeType>) 
   const apply = useBoard((s) => s.apply);
   const beginInteraction = useBoard((s) => s.beginInteraction);
   const endInteraction = useBoard((s) => s.endInteraction);
-  // 커스텀 hex 색은 인라인 스타일로 — 배경은 같은 색의 5% 알파(#rrggbb0d)
+  // 커스텀 hex 색은 인라인 스타일로 — 배경은 흰색에 12% 섞은 불투명 파스텔(FRAME_COLORS 와 동일 규칙)
   const customColor = isCustomColor(frame.color) ? frame.color : null;
   const palette = frameColor(frame.color);
 
@@ -51,7 +51,10 @@ export default function FrameNode({ data, selected }: NodeProps<FrameNodeType>) 
         ].join(" ")}
         style={
           customColor
-            ? { borderColor: customColor, backgroundColor: `${customColor}0d` }
+            ? {
+                borderColor: customColor,
+                backgroundColor: `color-mix(in srgb, ${customColor} 12%, #ffffff)`,
+              }
             : undefined
         }
       >

@@ -165,6 +165,15 @@ export default function Toolbar({
           파일
         </Utility>
         <Utility onClick={() => addNote(center())}>메모</Utility>
+        <Utility
+          onClick={() => {
+            useSelection.getState().clear();
+            setGroupMode("draw");
+          }}
+          title="펜으로 그려 메모 카드 만들기"
+        >
+          그리기
+        </Utility>
 
         {/* 그룹 = 올가미로 영역을 감싸 묶기. 사각형/자유형 선택 */}
         <div className="relative" ref={groupRef}>
@@ -336,10 +345,20 @@ export default function Toolbar({
 
     {/* 좁은 화면 전용 하단 액션 바 — 엄지가 닿는 곳에 둔다 */}
     <nav className="glass-float inset-safe-bottom absolute left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full px-2.5 py-1.5 lg:hidden">
-      <Utility onClick={() => fileInputRef.current?.click()}>파일</Utility>
-      <Utility onClick={() => addNote(center())}>메모</Utility>
+      <Utility compact onClick={() => fileInputRef.current?.click()}>파일</Utility>
+      <Utility compact onClick={() => addNote(center())}>메모</Utility>
+      <Utility
+        compact
+        onClick={() => {
+          useSelection.getState().clear();
+          setGroupMode("draw");
+        }}
+      >
+        펜
+      </Utility>
       {/* "그룹" → 묶기 모드 진입. 카드를 탭해 고른 뒤 "완료"로 묶는다(사진 선택 방식). */}
       <Utility
+        compact
         onClick={() => {
           useSelection.getState().clear();
           setGroupMode("pick");
@@ -347,13 +366,13 @@ export default function Toolbar({
       >
         그룹
       </Utility>
-      <Utility onClick={deleteSelected} disabled={!hasSelection}>
+      <Utility compact onClick={deleteSelected} disabled={!hasSelection}>
         삭제
       </Utility>
-      <Utility onClick={undo} disabled={!canUndo}>
+      <Utility compact onClick={undo} disabled={!canUndo}>
         ↶
       </Utility>
-      <Utility onClick={redo} disabled={!canRedo}>
+      <Utility compact onClick={redo} disabled={!canRedo}>
         ↷
       </Utility>
     </nav>
@@ -361,24 +380,31 @@ export default function Toolbar({
   );
 }
 
-/** Pearl 캡슐 — 유틸리티 버튼. 파랑이 아니다(파랑은 진짜 액션 전용). */
+/** Pearl 캡슐 — 유틸리티 버튼. 파랑이 아니다(파랑은 진짜 액션 전용).
+ *  compact = 모바일 하단 바 전용(버튼 7개가 좁은 화면에 다 들어가야 한다) */
 function Utility({
   children,
   onClick,
   disabled,
   title,
+  compact,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
   title?: string;
+  compact?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="shrink-0 whitespace-nowrap rounded-full border border-divider bg-pearl px-3.5 py-1.5 text-[14px] text-ink-80 transition hover:bg-parchment disabled:opacity-30 disabled:hover:bg-pearl"
+      className={
+        compact
+          ? "shrink-0 whitespace-nowrap rounded-full border border-divider bg-pearl px-2.5 py-1.5 text-[13px] text-ink-80 transition hover:bg-parchment disabled:opacity-30 disabled:hover:bg-pearl"
+          : "shrink-0 whitespace-nowrap rounded-full border border-divider bg-pearl px-3.5 py-1.5 text-[14px] text-ink-80 transition hover:bg-parchment disabled:opacity-30 disabled:hover:bg-pearl"
+      }
     >
       {children}
     </button>
