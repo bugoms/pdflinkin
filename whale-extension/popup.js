@@ -326,20 +326,58 @@ function bindMain() {
     button.append(dot, title);
     button.addEventListener("click", () => void openItem(item));
 
-    // 보드에서 보기(딥링크) — 행에 마우스를 올리면 삭제 왼쪽에 나타난다.
-    const jump = document.createElement("button");
-    jump.type = "button";
-    jump.className = "row-open-board";
-    jump.title = "보드에서 보기";
-    jump.setAttribute("aria-label", "보드에서 보기");
-    jump.innerHTML =
+    // 이름(제목) 수정 — 행에 마우스를 올리면 삭제 왼쪽에 나타난다. 인라인 입력으로 바꾼다.
+    const rename = document.createElement("button");
+    rename.type = "button";
+    rename.className = "row-rename";
+    rename.title = "이름 수정";
+    rename.setAttribute("aria-label", "이름 수정");
+    rename.innerHTML =
       '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
-      '<rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>' +
-      '<circle cx="8" cy="8" r="2" fill="currentColor"/></svg>';
-    jump.addEventListener("click", (e) => {
+      '<path d="M9.9 3.1l3 3L6 13H3v-3l6.9-6.9ZM11.4 1.6a1.2 1.2 0 0 1 1.7 0l1.3 1.3a1.2 1.2 0 0 1 0 1.7l-.8.8-3-3 .8-.8Z" ' +
+      'fill="currentColor"/></svg>';
+    rename.addEventListener("click", (e) => {
       e.stopPropagation();
-      openOnBoard(item);
+      startRename();
     });
+
+    function startRename() {
+      if (li.querySelector(".row-edit")) return;
+      const input = document.createElement("input");
+      input.className = "row-edit";
+      input.value = item.title || item.file_name || item.note || "";
+      li.classList.add("editing");
+      li.append(input);
+      input.focus();
+      input.select();
+
+      let closed = false;
+      const finish = async (commit) => {
+        if (closed) return;
+        closed = true;
+        const next = input.value.trim();
+        input.remove();
+        li.classList.remove("editing");
+        if (!commit || !next || next === (item.title ?? "")) return;
+        const prevText = title.textContent;
+        title.textContent = next; // 낙관적 반영
+        try {
+          await ready();
+          await api.renameItem(session, item.id, next);
+          item.title = next;
+        } catch {
+          title.textContent = prevText; // 실패 시 원복
+        }
+      };
+
+      input.addEventListener("keydown", (e) => {
+        e.stopPropagation();
+        if (e.key === "Enter") void finish(true);
+        if (e.key === "Escape") void finish(false);
+      });
+      input.addEventListener("blur", () => void finish(true));
+      input.addEventListener("click", (e) => e.stopPropagation());
+    }
 
     // 삭제(휴지통) — 행에 마우스를 올리면 나타난다. 확인창 없이 바로 휴지통행.
     const del = document.createElement("button");
@@ -367,7 +405,7 @@ function bindMain() {
       }
     });
 
-    li.append(button, jump, del);
+    li.append(button, rename, del);
     return li;
   }
 

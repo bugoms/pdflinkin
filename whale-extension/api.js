@@ -262,6 +262,15 @@ async function trashItem(session, id) {
   });
 }
 
+/** 카드 이름(제목) 변경 — 목록 보기의 연필 아이콘이 쓴다 */
+async function renameItem(session, id, title) {
+  await rest(session, `items?id=eq.${id}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ title }),
+  });
+}
+
 async function addLinkItem(session, boardId, url, pos, title) {
   await rest(session, "items", {
     method: "POST",
@@ -436,6 +445,7 @@ const api = {
   listItems,
   listFrames,
   trashItem,
+  renameItem,
   signStorageUrl,
   addLinkItem,
   addImageLinkItem,

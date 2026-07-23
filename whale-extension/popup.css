@@ -327,12 +327,14 @@ header .text-action {
   background: var(--parchment);
 }
 
-/* 행 삭제(휴지통) — 평소 숨김, 행 hover 시 우측에 등장 */
+/* 행 hover 아이콘 공통(이름수정·삭제) — inset+margin:auto 로 세로 중앙을 보장한다
+ * (translateY 방식은 다른 transform 규칙과 겹치면 어긋난다) */
+#item-list .row-rename,
 #item-list .row-delete {
   position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  bottom: 0;
+  margin: auto 0;
   width: 26px;
   height: 26px;
   padding: 0;
@@ -346,8 +348,23 @@ header .text-action {
   transition: opacity 120ms ease, background 120ms ease, color 120ms ease;
 }
 
+#item-list .row-delete {
+  right: 8px;
+}
+
+/* 이름 수정 — 삭제 왼쪽 */
+#item-list .row-rename {
+  right: 38px;
+}
+
+#item-list li:hover .row-rename,
 #item-list li:hover .row-delete {
   opacity: 1;
+}
+
+#item-list .row-rename:hover {
+  background: var(--parchment);
+  color: var(--ink-80);
 }
 
 #item-list .row-delete:hover {
@@ -359,42 +376,30 @@ header .text-action {
   opacity: 0.4;
 }
 
+#item-list .row-rename svg,
 #item-list .row-delete svg {
   width: 15px;
   height: 15px;
+  display: block;
 }
 
-/* 보드에서 보기(딥링크) — 삭제 왼쪽에, 행 hover 시 등장 */
-#item-list .row-open-board {
+/* 이름 수정 인라인 입력 — 행 전체를 덮는다 */
+#item-list li.editing > button {
+  visibility: hidden;
+}
+
+#item-list li.editing .row-rename,
+#item-list li.editing .row-delete {
+  display: none;
+}
+
+#item-list .row-edit {
   position: absolute;
-  right: 38px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  inset: 2px 6px;
+  width: calc(100% - 12px);
   border-radius: var(--r-sm);
-  color: var(--ink-48);
-  background: transparent;
-  opacity: 0;
-  transition: opacity 120ms ease, background 120ms ease, color 120ms ease;
-}
-
-#item-list li:hover .row-open-board {
-  opacity: 1;
-}
-
-#item-list .row-open-board:hover {
-  background: var(--parchment);
-  color: var(--ink-80);
-}
-
-#item-list .row-open-board svg {
-  width: 15px;
-  height: 15px;
+  padding: 0 8px;
+  font-size: 13px;
 }
 
 /* 그룹 소속 문서 — 그룹 헤더와 같은 색의 ㄴ자 연결선으로 종속 표시 */
