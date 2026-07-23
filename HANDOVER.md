@@ -1,6 +1,6 @@
 # 인수인계 메모 (LinkScape)
 
-> 마지막 갱신: 2026-07-21 / 최신 작업: 팝업·드롭다운 메뉴 불투명 처리(`.glass-solid`) · (그 전) 한글 뷰어(hwp.js)·확장 드롭존·15일 자동 휴지통 정리·상태표시줄 안전영역·그룹 추가/모바일 묶기 모드.
+> 마지막 갱신: 2026-07-21 / 최신 작업: **그리기(펜 노트)** · **그룹 유동 크기+겹침 방지** · **프레임 불투명 배경** · **확장 목록 행 이름수정** · 팝업 메뉴 불투명(`.glass-solid`) · (그 전) 한글 뷰어(hwp.js)·확장 드롭존·15일 자동 휴지통 정리·상태표시줄 안전영역.
 > 브랜치 `main`. **위 작업 전부 커밋·푸시 완료**(각각 4종 검증 통과). 미추적 `plan1.md`·`chrome-store-listing.skill` 은 커밋 대상 아님(스크래치). 이 문서는 구 `HANDOFF.md` 를 이름만 바꾼 것.
 > 상태: **Vercel 배포 동작 중**, Supabase 마이그레이션 0001·0002 실행 완료, 헤드리스 E2E 검증 체계 구축, **Capacitor 안드로이드 에뮬레이터 실행·설치·로그인 확인**.
 > **⚠️ 에뮬레이터에서 눈으로 확인할 것 2개는 §6 맨 위 "확인 대기" 참고**(상태표시줄 겹침 수정이 안드로이드 env() 로 먹는지 등).
@@ -17,7 +17,8 @@
 - `Ctrl+V` → 커서 자리에 링크 카드 (OG 메타 자동 수집) / PDF·이미지 드롭 → 카드
 - 빈 곳 더블클릭 → 메모 / 카드 더블클릭 → 열기·편집
 - **좌클릭 드래그(빈 곳) = 선택 올가미**(Partial). 팬 = 스페이스/휠클릭/터치
-- **그룹**: 여러 방법 — ① 툴바 "그룹 ▾" → 사각형/자유형 올가미로 영역 감싸기, ② "그룹 ▾" → **"선택한 카드 묶기"**(현재 선택을 묶음), ③ 카드를 프레임 안으로 드래그(밖으로 끌면 빠짐). **선택에 기존 프레임이 있으면 그 그룹에 추가**되고 프레임이 카드 담게 커짐. **모바일**: 하단 "그룹" → **묶기 모드**(카드를 탭해 고르고 "완료")
+- **그룹**: 여러 방법 — ① 툴바 "그룹 ▾" → 사각형/자유형 올가미로 영역 감싸기, ② "그룹 ▾" → **"선택한 카드 묶기"**(현재 선택을 묶음), ③ 카드를 프레임 안으로 드래그(밖으로 끌면 빠짐). **선택에 기존 프레임이 있으면 그 그룹에 추가**. **프레임은 자식에 맞춰 유동적으로 커지고 줄어들며**(들어오면 확장, 빠지면 축소 — 포함 여부가 눈에 보임), 들어온 카드는 형제와 **겹치지 않게 계단식(+24px)으로 비켜** 놓인다. **모바일**: 하단 "그룹" → **묶기 모드**(카드를 탭해 고르고 "완료")
+- **그리기(펜 노트)**: 툴바 "그리기"(모바일 "펜") → 펜으로 긋고(색 6종: 잉크+분류색 5) "완료" → **그린 자리에 그 크기 그대로 이미지 카드**(SVG 원본 + JPEG 썸네일 업로드, kind=image — 스키마 변경 없음)
 - **여러 보드**: 로고 옆 `BoardSwitcher` 로 보드 생성·전환·이름변경·삭제
 - **실시간**: 확장·다른 탭에서 담으면 새로고침 없이 즉시 캔버스에 나타남
 - **우클릭 메뉴** (카드: 열기·복제·삭제 / 빈 곳: 메모·그룹 추가(빈 프레임)·붙여넣기·화면 맞추기)
@@ -27,7 +28,7 @@
 
 **웨일 확장 (`whale-extension/`, 순수 MV3 — 빌드 없음, 크롬 겸용)**
 - 팝업: 현재 탭 담기 · Ctrl+V(링크/이미지/텍스트→메모) · PDF·이미지 드롭
-- **목록 보기**: **보드별 헤더**(모든 보드 조회) → 그룹별 묶음(ㄴ자 종속) + 색 순서 + 키워드 검색(PDF 본문) + 행 hover 삭제(휴지통). 행 클릭 = 그 문서/링크 자체를 새 탭으로 엶
+- **목록 보기**: **보드별 헤더**(모든 보드 조회) → 그룹별 묶음(ㄴ자 종속) + 색 순서 + 키워드 검색(PDF 본문) + 행 hover **이름수정(연필, 인라인 입력)·삭제(휴지통)**. 행 클릭 = 그 문서/링크 자체를 새 탭으로 엶 (행 단위 "보드에서 보기"는 사용자 요청으로 제거 — 상단 "보드 열기 ↗"는 유지)
 - 우클릭 메뉴 4종: 링크/이미지/선택 텍스트/페이지 담기 (배지 ✓/! 피드백)
 - **페이지 드롭존**: 아무 페이지에서 드래그 시작하면 우하단에 드롭 타겟 (Shadow DOM)
 - 이미지는 실제 다운로드+썸네일 업로드 (실패 시 핫링크 폴백)
@@ -67,7 +68,8 @@ src/
   components/pwa/
     ServiceWorkerRegister.tsx /sw.js 등록 (설치형·오프라인 셸)  components/board/
     BoardClient.tsx           조립 + 태그필터바 + 빈 캔버스 안내 + useRealtime/usePdfBackfill 호출
-    Canvas.tsx                ★ RF 캔버스. 올가미/팬/우클릭 메뉴/단축키/드롭/settleDrag. GroupLasso 렌더
+    Canvas.tsx                ★ RF 캔버스. 올가미/팬/우클릭 메뉴/단축키/드롭/settleDrag(겹침 해소+프레임 fit). GroupLasso·DrawLayer 렌더
+    DrawLayer.tsx             ★ 그리기(펜) 오버레이 — 획 수집(색 6종) → SVG+JPEG 썸네일 → addDrawing
     BoardSwitcher.tsx         ★ 보드 목록·전환·이름변경(인라인)·삭제(confirm)·생성 드롭다운
     GroupLasso.tsx            ★ 올가미 오버레이(사각형/자유형) + 감쌈 판정 + 프레임 생성
     useRealtime.ts            ★ realtime 구독 → applyRemote 로만 반영
@@ -75,7 +77,7 @@ src/
     Inspector.tsx             단일 선택 패널. 라벨 "제목", 색(토큰5+커스텀 피커), 다운로드 버튼
     Viewer.tsx                PDF·이미지·파일 뷰어(오피스=Office Online, 한글=hwp.js 벤더 렌더, 이어읽기, 다운로드)
     useBoardActions.ts        삭제/복제/엣지삭제/열기/★groupSelected(선택→그룹, 기존 프레임 있으면 추가+키움) 공용
-    useIngest.ts              ★ 링크/파일 → 카드 생성. addFiles 는 모든 형식 허용(PDF/이미지 외=file)
+    useIngest.ts              ★ 링크/파일 → 카드 생성. addFiles 는 모든 형식 허용(PDF/이미지 외=file). addDrawing=펜 그림 SVG 업로드
     usePdfBackfill.ts         썸네일 없는 PDF 자동 보정 (확장 업로드분)
     useLinkBackfill.ts        ★ 확장 링크 카드에 OG 메타 백필 (변경 시에만 apply)
     useTrashAutoPurge.ts      ★ 15일 지난 휴지통 카드를 스토리지 파일까지 자동 영구삭제(보드 열 때, 전 보드)
@@ -84,9 +86,9 @@ src/
     nodes/                    CardShell(색=외곽선), Link/Pdf/Image/Note/File/FrameNode, types.ts
                              (FileNode = 일반 파일 카드: 아이콘+확장자 배지, 열기=뷰어/다운로드)  store/
     board.ts                  ★★ 스냅샷 diff 저장 큐 + 언두/리두 + applyRemote/hasPending. 심장
-    groupMode.ts              그룹 모드 상태(null|'rect'|'free'|'pick'). 'pick'=모바일 묶기 모드(탭해 고르기)
+    groupMode.ts              캔버스 오버레이 모드(null|'rect'|'free'|'pick'|'draw'). 'pick'=모바일 묶기, 'draw'=그리기
     selection.ts, viewer.ts   선택/뷰어 상태
-  lib/                        supabase/, pdf.ts, storage.ts, geometry.ts, palette.ts, url.ts
+  lib/                        supabase/, pdf.ts, storage.ts, geometry.ts(+fitFrameToChildren·resolveOverlapInFrame·GROUP_PAD), palette.ts, url.ts
 supabase/migrations/
   0001_init.sql               스키마+RLS+버킷 (실행 완료)
   0002_realtime.sql           items/frames/edges publication + REPLICA IDENTITY FULL (실행 완료)
@@ -145,6 +147,13 @@ app-plan.md                   ★ 앱화(모바일) 계획·진행 상태 (PWA·
 #### 이번 세션 (UI 다듬기 — 커밋·푸시 완료)
 
 - **팝업·드롭다운 메뉴 불투명 처리** — 그룹 ▾·햄버거·보드 스위처 드롭다운·우클릭 메뉴가 반투명(`.glass-float` 72% + blur)이라 뒤 캔버스가 비쳐 글자가 겹쳐 보이던 문제. globals.css 에 **불투명 변형 `.glass-solid`**(배경 리터럴 `#ffffff`, 테두리·그림자 유지) 추가하고 그 4개 메뉴에 적용(`Toolbar.tsx`·`BoardSwitcher.tsx`·`ContextMenu.tsx`). 떠 있는 툴바 알약·라벨·인스펙터/뷰어 패널은 유리 느낌 유지(그대로). **처음에 `var(--color-canvas)` 를 썼다가 배경이 아예 안 칠해지는 함정 — §5 참고.**
+
+#### 이번 세션 2 (그룹 UX·그리기·확장 목록 — E2E 21/21 통과)
+
+- **그룹 유동 크기 + 겹침 방지** — `settleDrag`(Canvas)가 소속 변경 시: 들어온 카드는 형제와 겹치면 **+24px 계단식으로 비켜**(`resolveOverlapInFrame`, 최소 간격 12px), 소속이 바뀐 프레임(들어간 곳·나온 곳 모두)은 **자식 전부+여백 32px 에 딱 맞게 키우거나 줄인다**(`fitFrameToChildren` — geometry.ts 공용, `groupSelected` 도 같은 규칙). 빈 프레임은 안 건드림(의도적 빈 그룹 보호). 최소 크기 240×180 유지.
+- **프레임 배경 불투명** — `FRAME_COLORS` 의 2~4% 알파 배경(`#0066cc08` 등)이 캔버스 점무늬가 비쳐 흐릿하던 것을 **흰색에 12% 섞은 불투명 파스텔 고정 hex**(sky `#ebf4fe` 등)로. 커스텀 색 프레임은 `color-mix(in srgb, <색> 12%, #ffffff)` (FrameNode 인라인).
+- **그리기(펜 노트)** — `DrawLayer.tsx` 오버레이(GroupLasso 와 같은 구조 — 화면 좌표로 획을 받고 완료 시 flow 좌표 변환). 색 6종(잉크+분류색 5)·마지막 획 취소·Esc 취소. 완료 시 **SVG 원본 + JPEG 썸네일(긴 변 640)** 을 스토리지에 올리고 `useIngest.addDrawing` 이 **kind='image'** 카드로 생성(그린 자리·그린 크기 그대로) — **item_kind enum 은 안 건드림(스키마 변경 없음)**. groupMode 에 'draw' 모드 추가(상호배제 공짜). 모바일 하단 바 "펜" + Utility compact 변형(버튼 7개 폭 맞춤).
+- **확장 목록 행 아이콘 정리** — 행 hover 의 "↦ 보드에서 보기" 버튼 제거(상단 "보드 열기 ↗"는 유지 — 사용자 명시 요청), 그 자리에 **이름수정(연필)** 추가: 클릭 → 행 위 인라인 입력(`.row-edit`) → Enter/blur 커밋(낙관적 반영, 실패 시 원복), `api.renameItem`(PATCH title). 아이콘 세로 중앙정렬을 `top:50%+translateY` 대신 **`top:0;bottom:0;margin:auto 0`** 로 보장.
 
 ### 주요 서브시스템 상세
 
@@ -233,6 +242,9 @@ app-plan.md                   ★ 앱화(모바일) 계획·진행 상태 (PWA·
 3. 검증은 반드시 헤드리스 E2E 로 실동작 확인. 커밋 전 4종(9번 마지막) 필수.
    - **E2E 함정**: 스토리지 파일 존재 확인은 **GET 객체 엔드포인트 금지**(CDN 엣지 캐시가 삭제 후에도 stale 200) → `POST /storage/v1/object/list/files` (list) 로 확인.
    - 파일 업로드 E2E 는 `input[type=file]` 에 `elementHandle.uploadFile(path)`. 다운로드 파일명 검증은 `Page.setDownloadBehavior` 로 폴더 지정 후 `readdirSync`.
+   - **드래그 후 DB 검증은 저장 큐와 레이스** — flush 는 500ms 디바운스 + 테이블별 순차 upsert 라, 단발 조회는 반쯤 저장된 상태(프레임은 새 값·카드는 옛 값)를 볼 수 있다. **기대 조건이 될 때까지 REST 폴링**으로 확인.
+   - PostgREST **벌크 INSERT 는 모든 행의 키가 동일**해야 한다(`PGRST102`) — 한 행에만 frame_id 를 넣으면 400.
+   - 스크래치패드의 ESM 스크립트에서 프로젝트 의존성은 `createRequire(<프로젝트>/package.json)` 로 로드(NODE_PATH 는 ESM 에 안 먹음).
 
 ---
 
@@ -257,6 +269,7 @@ app-plan.md                   ★ 앱화(모바일) 계획·진행 상태 (PWA·
 - Action Blue(#0066cc) 하나만 "누를 수 있음". 카드 색은 분류용 — **외곽선 2px 로만**(배경 채움 금지)
   - 선택지 = 토큰 5종(`PICKER_TOKENS`) + 커스텀 팔레트(`#rrggbb`, `isCustomColor`, 인라인 스타일). violet 토큰은 선택지에서 빠졌지만 기존 카드용으로 `CARD_COLORS` 에 남김
 - 그림자 예외 둘: `.product-shadow`(PDF 지면·사진), `.glass-float`(떠 있는 크롬). 텍스트 메뉴는 불투명 `.glass-solid`(뒤 비침 제거 — 리터럴 `#ffffff`)
+- **그룹 프레임 배경은 불투명 파스텔**(FRAME_COLORS 고정 hex = 흰색+12%, 커스텀은 `color-mix(... 12%, #ffffff)`) — 반투명 알파 금지(점무늬 비침)
 - 모양: rounded-full=액션 / apple-md(11px)=유틸 / apple-lg(18px)=카드·패널. 폰트 Pretendard 하나, 다크 모드 없음
 - **확장 popup.css 는 웹 토큰 복제본** — 웹 토큰 바꾸면 같이 갱신
 
