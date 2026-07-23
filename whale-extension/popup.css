@@ -324,6 +324,10 @@ header .text-action {
   width: 100%;
   padding: 8px 12px;
   text-align: left;
+  /* 우측 아이콘 영역(.row-actions = right 8px + 26+4+26)만큼 비워 둔다.
+   * 이 자리를 안 비우면 긴 제목이 아이콘 밑으로 파고들어 겹쳐 보인다.
+   * hover 때만 비우면 글자가 튀므로 항상 확보한다. */
+  padding-right: 66px;
 }
 
 #item-list .row-main:hover {
