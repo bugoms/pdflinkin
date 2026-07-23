@@ -405,7 +405,12 @@ function bindMain() {
       }
     });
 
-    li.append(button, rename, del);
+    // 아이콘 둘을 flex 컨테이너 하나에 담아 행 우측 세로 중앙에 고정한다
+    const actions = document.createElement("span");
+    actions.className = "row-actions";
+    actions.append(rename, del);
+
+    li.append(button, actions);
     return li;
   }
 

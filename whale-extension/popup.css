@@ -327,14 +327,28 @@ header .text-action {
   background: var(--parchment);
 }
 
-/* 행 hover 아이콘 공통(이름수정·삭제) — inset+margin:auto 로 세로 중앙을 보장한다
- * (translateY 방식은 다른 transform 규칙과 겹치면 어긋난다) */
-#item-list .row-rename,
-#item-list .row-delete {
+/* 행 hover 아이콘(이름수정·삭제) — 개별 absolute 대신 flex 컨테이너 하나로
+ * 우측 세로 중앙에 고정한다(구조적으로 어긋날 수 없음) */
+#item-list .row-actions {
   position: absolute;
   top: 0;
   bottom: 0;
-  margin: auto 0;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+#item-list li:hover .row-actions {
+  opacity: 1;
+}
+
+#item-list .row-rename,
+#item-list .row-delete {
+  position: static;
+  flex: none;
   width: 26px;
   height: 26px;
   padding: 0;
@@ -344,22 +358,7 @@ header .text-action {
   border-radius: var(--r-sm);
   color: var(--ink-48);
   background: transparent;
-  opacity: 0;
-  transition: opacity 120ms ease, background 120ms ease, color 120ms ease;
-}
-
-#item-list .row-delete {
-  right: 8px;
-}
-
-/* 이름 수정 — 삭제 왼쪽 */
-#item-list .row-rename {
-  right: 38px;
-}
-
-#item-list li:hover .row-rename,
-#item-list li:hover .row-delete {
-  opacity: 1;
+  transition: background 120ms ease, color 120ms ease;
 }
 
 #item-list .row-rename:hover {
@@ -388,8 +387,7 @@ header .text-action {
   visibility: hidden;
 }
 
-#item-list li.editing .row-rename,
-#item-list li.editing .row-delete {
+#item-list li.editing .row-actions {
   display: none;
 }
 
