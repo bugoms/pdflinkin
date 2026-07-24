@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LinkScape</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f5f7;
+        color: #1d1d1f;
+        font-family: "Pretendard Variable", Pretendard, -apple-system,
+          BlinkMacSystemFont, system-ui, "Malgun Gothic", sans-serif;
+        letter-spacing: -0.01em;
+        text-align: center;
+      }
+      h1 { font-size: 19px; font-weight: 600; margin: 0 0 6px; }
+      p { font-size: 13px; color: #7a7a7a; margin: 0; line-height: 1.5; }
+    </style>
+  </head>
+  <body>
+    <!-- 원격(Vercel) 로드 실패 시의 폴백 화면. 평소에는 보이지 않는다. -->
+    <div>
+      <h1>연결할 수 없습니다</h1>
+      <p>
+        인터넷 연결을 확인해 주세요.<br />
+        트레이 아이콘을 눌러 다시 열 수 있습니다.
+      </p>
+    </div>
+  </body>
+</html>

@@ -39,6 +39,15 @@ yarn-error.log*
 # postinstall 로 생성되는 hwp.js 뷰어(벤더링)
 /public/vendor/hwp.js
 
+# tauri (데스크톱) — 빌드 산출물과 자동 생성물
+/src-tauri/target
+/src-tauri/gen
+# whale-extension/icons/icons.png 에서 정사각 크롭한 아이콘 원본(재생성 가능)
+/src-tauri/icon-source.png
+# tauri icon 이 안드로이드/iOS 용으로도 뱉지만 데스크톱 앱엔 불필요
+/src-tauri/icons/android
+/src-tauri/icons/ios
+
 # vercel
 .vercel
 

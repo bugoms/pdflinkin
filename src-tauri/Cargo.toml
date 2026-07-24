@@ -1,0 +1,33 @@
+[package]
+name = "linkscape-desktop"
+version = "0.1.0"
+description = "LinkScape 데스크톱 — 트레이 상주 + 전역 단축키로 담기"
+authors = ["LinkScape"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "linkscape_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# tray-icon = 시스템 트레이 상주에 필요한 기능 플래그
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-notification = "2"
+urlencoding = "2"
+tokio = { version = "1", features = ["time"] }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-global-shortcut = "2"
+
+# 릴리스 바이너리를 최대한 작게 (Electron 대비 용량 이점을 살린다)
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

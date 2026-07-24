@@ -9,6 +9,8 @@
     "lint": "eslint",
     "cap:sync": "cap sync",
     "cap:android": "cap open android",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
     "postinstall": "node scripts/copy-pdf-worker.mjs && node scripts/copy-hwp-viewer.mjs",
     "prebuild": "node scripts/copy-pdf-worker.mjs && node scripts/copy-hwp-viewer.mjs",
     "predev": "node scripts/copy-pdf-worker.mjs && node scripts/copy-hwp-viewer.mjs"
@@ -31,6 +33,7 @@
   "devDependencies": {
     "@capacitor/cli": "^8.4.2",
     "@tailwindcss/postcss": "^4",
+    "@tauri-apps/cli": "^2.11.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

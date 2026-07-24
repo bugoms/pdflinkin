@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "LinkScape 데스크톱 기본 권한. 트레이·단축키·클립보드·알림은 전부 Rust 쪽에서만 쓰므로 여기서 프론트엔드에 열어 줄 권한은 최소로 둔다. remote 를 비워 두면 원격(Vercel) 페이지는 Tauri IPC 를 전혀 호출할 수 없다 — 의도한 보안 경계.",
+  "windows": ["main", "capture"],
+  "permissions": ["core:default"]
+}
