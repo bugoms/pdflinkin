@@ -1,8 +1,8 @@
 # LinkScape 앱 배포 기획 (app-plan)
 
-> 작성: 2026-07-19 / 상태: **기획 단계 — 구현 전**
+> 작성: 2026-07-19 / 갱신: 2026-07-21(Windows 데스크톱 추가)
 > 목적: 현재 웹(Next.js + Supabase) + 웨일/크롬 확장으로 된 LinkScape 를
-> **iOS·Android 앱**으로 배포하기 위한 방향·아키텍처·단계별 계획을 정한다.
+> **iOS·Android 앱 + Windows 데스크톱 앱**으로 배포하기 위한 방향·아키텍처·계획.
 > 전제: [HANDOFF.md](HANDOFF.md) 의 아키텍처 규칙(스냅샷 저장 단일 경로, RLS,
 > PDF 전량 클라이언트, realtime=applyRemote)은 앱에서도 그대로 지킨다.
 
@@ -44,6 +44,17 @@
 - 주의:
   - **프로젝트 경로 한글**(`…/바탕 화면/pdf링크서비스`) → AGP 경로 검사 실패 → `android/gradle.properties` 에 `android.overridePathCheck=true` 로 우회. **장기적으론 ASCII 경로로 옮기는 걸 권장**(일부 네이티브 툴이 비-ASCII 경로에서 깨질 수 있음).
   - `android/local.properties`(SDK 경로)·빌드 산출물은 `.gitignore` 로 제외됨.
+
+### ✅ P2-D — Windows 데스크톱 앱 (Tauri, 완료)
+- `src-tauri/` — Tauri v2. **전략은 Capacitor 안드로이드와 동일한 원격 URL 하이브리드**(`app.windows[0].url` → Vercel). P1 정적 번들이 끝나면 로컬 번들로 바꾸기만 하면 된다.
+- 네이티브가 얹는 것만 담당:
+  - **시스템 트레이 상주** — 창의 X 는 종료가 아니라 숨기기(`CloseRequested` → `prevent_close` + `hide`). 트레이 좌클릭=창 열기, 우클릭=메뉴(보드 열기 / 클립보드에서 담기 / 종료).
+  - **전역 단축키 `Ctrl+Shift+V`** — 어느 앱에 있든 클립보드의 링크를 보드에 담는다. 확장이 브라우저 안에서 하던 일의 OS 판.
+- **담기는 웹의 기존 `/share` 를 재사용**(PWA share_target 착지점). 숨은 창을 `/share?text=…` 로 띄우고, 그 창이 이동하는 주소를 폴링해 **실제 결과**로 알림을 띄운다(`/board?…item=` = 성공, `/login` = 로그인 필요). 담기 규칙이 웹/확장/모바일/데스크톱 한 곳에 유지된다.
+- **보안**: `capabilities/default.json` 에 `remote` 를 두지 않아 **원격(Vercel) 페이지는 Tauri IPC 를 전혀 호출할 수 없다**. 클립보드·알림·트레이는 전부 Rust 쪽에서만 쓴다.
+- **용량**: WebView2(Win11 내장)를 쓰므로 Electron(150MB+) 대비 매우 작다. 릴리스 프로파일에 `opt-level="s"`·LTO·strip 적용.
+- 빌드: `npm run desktop:dev`(개발) / `npm run desktop:build`(NSIS 설치파일). 요구사항 = Rust + WebView2 + VS C++ 빌드도구.
+- **iOS/안드로이드는 이 크레이트와 무관** — 모바일은 계속 Capacitor.
 
 ### 아직 안 한 것 (다음 단계)
 - **P1 정적 번들**: `board/page` 서버→클라 로더, `middleware` 인증→클라 가드, `/api/unfurl`→Supabase Edge Function, Next `output: export`. → 앱 자립(오프라인·네이티브 공유의 전제).

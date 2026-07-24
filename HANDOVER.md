@@ -1,7 +1,8 @@
 # 인수인계 메모 (LinkScape)
 
-> 마지막 갱신: 2026-07-21 / 최신 작업: **뷰어 Esc·뒤로가기 닫기 수정** · **확장 새 아이콘** · **그리기=캔버스 잉크** · **오버레이 Ctrl+휠 캔버스 줌** · **그룹 유동 크기+겹침 방지** · **프레임 불투명 배경** · **확장 목록 행 이름수정**.
+> 마지막 갱신: 2026-07-21 / 최신 작업: **Windows 데스크톱 앱 신규(Tauri v2 — 트레이 상주 + 전역 단축키 담기)** · 뷰어 Esc·뒤로가기 닫기 수정 · 확장 새 아이콘 · 그리기=캔버스 잉크 · 오버레이 Ctrl+휠 캔버스 줌 · 그룹 유동 크기+겹침 방지.
 > 브랜치 `main`. **위 작업 전부 커밋·푸시 완료**(각각 4종 검증 통과). 미추적 `plan1.md`·`chrome-store-listing.skill` 은 커밋 대상 아님(스크래치). 이 문서는 구 `HANDOFF.md` 를 이름만 바꾼 것.
+> **플랫폼 4개**: 웹(Vercel) · 웨일/크롬 확장 · 안드로이드(Capacitor, 에뮬 확인) · **Windows 데스크톱(Tauri, 실행·트레이·단축키 검증 완료)**.
 > 상태: **Vercel 배포 동작 중**, Supabase 마이그레이션 0001·0002 실행 완료, 헤드리스 E2E 검증 체계 구축, **Capacitor 안드로이드 에뮬레이터 실행·설치·로그인 확인**.
 > **⚠️ 에뮬레이터에서 눈으로 확인할 것 2개는 §6 맨 위 "확인 대기" 참고**(상태표시줄 겹침 수정이 안드로이드 env() 로 먹는지 등).
 > **앱화(모바일) 계획·진행 상태는 `app-plan.md` 참고.** E2E 노하우는 Claude 메모리(`linkscape-e2e-setup`)에도 있다.
@@ -48,8 +49,10 @@
 | 배포 | Vercel (push 시 자동) |
 | E2E | `puppeteer-core`(devDep) + 로컬 Chrome 헤드리스 |
 | 확장 | 순수 HTML/CSS/JS, Manifest V3 |
+| 모바일 앱 | Capacitor 8 (안드로이드). iOS 는 Mac 필요 |
+| **데스크톱 앱** | **Tauri v2 (Rust) + WebView2** — `src-tauri/`. Electron 안 씀(용량) |
 
-개발 환경: Windows 11, PowerShell, Node 22. `gh` CLI 없음(자격증명 캐시로 push).
+개발 환경: Windows 11, PowerShell, Node 22, **Rust 1.97.1**(rustup). `gh` CLI 없음(자격증명 캐시로 push).
 
 ---
 
@@ -61,12 +64,15 @@ src/
   app/
     globals.css               ★ 디자인 토큰 + .glass-float + RF 오버라이드 + 안전영역 유틸(.inset-safe-*/.pad-safe-*/.pick-bar) (단일 출처)
     layout.tsx                Pretendard, suppressHydrationWarning, PWA 메타 + SW 등록
-    manifest.ts               ★ PWA 매니페스트(standalone + share_target GET /share)    login/page.tsx            이메일 로그인/가입 (오류 한국어 번역)
-    share/page.tsx            ★ PWA 공유 착지 — 공유된 링크를 카드로 + 딥링크    board/page.tsx            ★ 서버 컴포넌트. searchParams(await)에서 board id → 보드/카드 로드
+    manifest.ts               ★ PWA 매니페스트(standalone + share_target GET /share)
+    login/page.tsx            이메일 로그인/가입 (오류 한국어 번역)
+    share/page.tsx            ★ 공유 착지 — 링크를 카드로 + 딥링크. PWA share_target·데스크톱 단축키 담기 공용
+    board/page.tsx            ★ 서버 컴포넌트. searchParams(await)에서 board id → 보드/카드 로드
     icon.svg, apple-icon.png, favicon.ico   웹 파비콘(미니 캔버스 심벌)
     api/unfurl/route.ts       OG 수집 (SSRF 방어, 로그인 필요, 서버 함수는 이거 하나)
   components/pwa/
-    ServiceWorkerRegister.tsx /sw.js 등록 (설치형·오프라인 셸)  components/board/
+    ServiceWorkerRegister.tsx /sw.js 등록 (설치형·오프라인 셸)
+  components/board/
     BoardClient.tsx           조립 + 태그필터바 + 빈 캔버스 안내 + useRealtime/usePdfBackfill 호출
     Canvas.tsx                ★ RF 캔버스. 올가미/팬/우클릭 메뉴/단축키/드롭/settleDrag(겹침 해소+프레임 fit). GroupLasso·DrawLayer 렌더
     DrawLayer.tsx             ★ 그리기 오버레이 — 획을 flow 좌표로 수집(색 6종) → SVG 데이터 URL → addDrawing(캔버스 잉크)
@@ -85,7 +91,8 @@ src/
     ListPanel.tsx             ★ 웹 목록 보기 — 전 보드 조회·그룹·색정렬·검색·삭제·클릭 딥링크
     ContextMenu.tsx, SearchPalette.tsx, TrashPanel.tsx
     nodes/                    CardShell(색=외곽선), Link/Pdf/Image/Note/File/Stroke/FrameNode, types.ts(isStrokeItem)
-                             (FileNode = 일반 파일 카드: 아이콘+확장자 배지, 열기=뷰어/다운로드)  store/
+                             (FileNode = 일반 파일 카드: 아이콘+확장자 배지, 열기=뷰어/다운로드)
+  store/
     board.ts                  ★★ 스냅샷 diff 저장 큐 + 언두/리두 + applyRemote/hasPending. 심장
     groupMode.ts              캔버스 오버레이 모드(null|'rect'|'free'|'pick'|'draw'). 'pick'=모바일 묶기, 'draw'=그리기
     selection.ts, viewer.ts   선택/뷰어 상태
@@ -99,9 +106,21 @@ whale-extension/              ★ 웨일/크롬 확장 (전체가 순수 JS)
   background.js  dropzone.js  우클릭 메뉴·이미지 다운로드 / 페이지 드롭존
   popup.html/css/js           팝업 UI(웹 토큰 복제) + 목록 보기 + 드롭존 안 "또는 파일 선택" 링크(별도 버튼 아님)
   icons/                      확장 아이콘(미니 캔버스, 원본 icon.svg)
-public/sw.js                  ★ 서비스워커(오프라인 셸, 네트워크 우선)public/vendor/hwp.js          ★ 한글 뷰어(hwp.js) 벤더본 — Turbopack 번들 회피, turbopackIgnore 로 로드 [생성물·gitignore]
+public/sw.js                  ★ 서비스워커(오프라인 셸, 네트워크 우선)
+public/vendor/hwp.js          ★ 한글 뷰어(hwp.js) 벤더본 — Turbopack 번들 회피, turbopackIgnore 로 로드 [생성물·gitignore]
 scripts/copy-hwp-viewer.mjs   hwp.js esm 을 public/vendor 로 복사(node 'fs' import 만 빈 객체로 치환). postinstall/prebuild/predev
-app-plan.md                   ★ 앱화(모바일) 계획·진행 상태 (PWA·Capacitor·다음 단계)capacitor.config.ts           ★ Capacitor 설정(server.url→Vercel 하이브리드 PoC)capacitor-shell/index.html    Capacitor webDir 폴백 셸android/                      ★ Capacitor 안드로이드 네이티브 프로젝트 (gradle 빌드 검증됨)```
+app-plan.md                   ★ 앱화 계획·진행 상태 (PWA·Capacitor·Windows 데스크톱)
+capacitor.config.ts           ★ Capacitor 설정(server.url→Vercel 하이브리드 PoC)
+capacitor-shell/index.html    Capacitor webDir 폴백 셸
+android/                      ★ Capacitor 안드로이드 네이티브 프로젝트 (gradle 빌드 검증됨)
+src-tauri/                    ★ Windows 데스크톱 앱 (Tauri v2 / Rust). target·gen 은 gitignore
+  src/lib.rs                  ★★ 트레이·전역 단축키·창닫기=숨김·클립보드 담기 — 네이티브 로직 전부 여기
+  src/main.rs                 진입점 (릴리스에서 콘솔 창 숨김)
+  tauri.conf.json             ★ 창 url→Vercel, NSIS 번들·아이콘 설정
+  capabilities/default.json   ★ 프론트 권한 최소 — remote 미설정 = 원격 페이지가 Tauri IPC 호출 불가
+  shell/index.html            원격 로드 실패 시 폴백 화면
+  icons/                      앱·트레이 아이콘 (whale-extension/icons/icons.png 에서 생성)
+```
 
 ---
 
@@ -172,6 +191,19 @@ app-plan.md                   ★ 앱화(모바일) 계획·진행 상태 (PWA·
 - **확장 목록 그룹 안 행 아이콘 찌그러짐** — 광역 선택자 `#item-list button`(+`li.child button{padding-left:18px}`)이 특이도로 아이콘 버튼까지 침범. 행 본문에 **`.row-main`** 클래스를 줘 분리. 전 행 편차 0px 실측.
 - **긴 제목이 아이콘과 겹침** — 행 본문에 `padding-right:66px`(아이콘 영역 폭)을 **상시** 확보해 제목이 그 앞에서 말줄임. hover 때만 주면 글자가 튄다.
 
+#### 이번 세션 5 (Windows 데스크톱 앱 — 신규, 실행 검증 완료)
+
+사용자 요청: "exe 로 설치되고, 백그라운드(트레이)에 상주하고, 용량은 가볍게". → **Tauri v2** 선택(Electron 은 150MB+ 라 탈락). Windows 11 에 내장된 WebView2 를 빌려 쓰므로 **실행파일 3.43MB / NSIS 설치파일 1.26MB**.
+
+- **전략은 Capacitor 안드로이드와 동일한 원격 URL 하이브리드** — `tauri.conf.json` 의 `app.windows[0].url` 이 Vercel 을 가리킨다. 웹 코드를 하나도 안 고치고 데스크톱이 생겼다. `app-plan.md` P1(정적 번들)이 끝나면 이 값만 로컬 번들로 바꾸면 오프라인까지 확장된다.
+- **트레이 상주** — 창의 X 는 종료가 아니라 숨기기(`WindowEvent::CloseRequested` → `api.prevent_close()` + `window.hide()`). 트레이 좌클릭=창 열기, 우클릭=메뉴(보드 열기 / 클립보드에서 담기 / 종료).
+- **전역 단축키 `Ctrl+Shift+V`** — 어느 앱에 있든 클립보드의 링크를 보드에 담는다. 확장이 브라우저 안에서 하던 일의 OS 판.
+- **담기는 웹의 `/share` 를 그대로 재사용** — 숨은 창(`capture` 라벨)을 `/share?text=<클립보드>` 로 띄운다. 담기 규칙(보드 확보·계단식 좌표·OG 백필)이 웹/확장/모바일/데스크톱 한 곳에 유지된다. **결과는 추정하지 않고** 그 창이 이동한 주소를 400ms 간격으로 폴링해 판정(`/board?…item=`=성공, `/login`=로그인 필요, 16초 초과=실패) → 그에 맞는 네이티브 알림.
+- **보안 경계** — `capabilities/default.json` 에 `remote` 를 **두지 않았다**. 그래서 원격(Vercel) 페이지는 Tauri IPC 를 전혀 호출할 수 없다. 클립보드·알림·트레이는 전부 Rust 쪽에서만 쓴다.
+- **아이콘** — `whale-extension/icons/icons.png`(누끼 원본, 비정사각 2400×1357)는 `tauri icon` 이 거부한다. 아트워크 bbox 를 1024×1024 정사각으로 크롭해(`src-tauri/icon-source.png`, gitignore) 아이콘 세트를 생성했다.
+- **검증(실측)**: 실행파일 3.43MB · 실행 시 메모리 27MB · 로그인 화면 정상 렌더(스크린샷 확인) · `RegisterHotKey` 로 Ctrl+Shift+V 재등록 시도 실패(=앱이 점유 중) · `WM_CLOSE` 후 프로세스 생존 + `IsWindowVisible=False`(트레이 숨김) · NSIS 설치파일 생성.
+  - ⚠️ **클립보드 담기 실동작(단축키 눌러 카드가 실제로 생기는지)은 미검증** — 전역 단축키는 실제 키 입력이 필요해 헤드리스로 못 돌린다. §6 확인 대기.
+
 ### 주요 서브시스템 상세
 
 **여러 보드**
@@ -216,15 +248,21 @@ app-plan.md                   ★ 앱화(모바일) 계획·진행 상태 (PWA·
 | **오버레이(올가미·그리기)에서 Ctrl+휠이 브라우저 페이지 줌** | 오버레이는 RF 밖 형제 요소 — 휠이 캔버스에 안 닿고 기본 동작(페이지 줌)으로 샘. React `onWheel` 은 **passive 로 붙어 preventDefault 무효** → 네이티브 `addEventListener("wheel", fn, {passive:false})` 로 가로채 RF `setViewport` 직접 조작(`useWheelPanZoom`). 오버레이 좌표는 캡처 즉시 flow 로 변환해 둬야 중간 팬/줌에도 궤적이 안 틀어짐 |
 | **뷰어에서 Esc 가 "가끔" 안 먹음** | 문서 미리보기는 **교차 출처 iframe**(오피스=Office Online, txt 등=서명 URL). 그 안을 클릭하면 포커스가 iframe 으로 넘어가고 **keydown 이 부모 창에 아예 안 닿는다**(브라우저 보안 경계 — 부모에서 키를 가로챌 방법 없음). PDF·이미지·한글은 iframe 이 아니라 원래 잘 닫혔다. → ① 열 때 대화상자(`tabIndex=-1`)에 포커스 ② **포인터가 iframe 밖(헤더·여백)으로 나오면 포커스 회수**(iframe 위에선 핸들러가 안 불려 문서 조작을 방해 안 함) ③ 히스토리 항목으로 뒤로가기 닫기. E2E 로 `iframe 포커스 상태 Esc → 닫힘=false` 재현 확인 |
 | **모바일 뒤로가기가 뷰어가 아니라 보드를 벗어남** | 뷰어는 히스토리 항목이 아니었음 → back 이 이전 페이지로 감. 열 때 `history.pushState({lsViewer})`, `popstate` 에서 close. 닫기 버튼·Esc 는 `close()` 후 우리가 쌓은 항목이 현재 상태일 때만 `history.back()` 으로 정리(잔여 항목·중복 back 없음). dev StrictMode 이중 실행 대비 pushState 는 멱등 |
+| **`tauri icon` 이 "Source image must be square" 거부** | 원본 `icons.png` 가 2400×1357(누끼 여백 포함). → 알파 bbox 를 찾아 정사각 크롭한 1024×1024 를 먼저 만들고 그걸 입력으로 준다 |
+| **Tauri NSIS 번들 `액세스가 거부되었습니다 (os error 5)`** | `%LOCALAPPDATA%\tauri\nsis-3.11` 압축 해제가 중간에 끊겨 `makensis.exe` 가 2560바이트로 잘려 있었다(정상은 Bin\ 아래 468KB). **일시적 현상** — 그 폴더를 지우고 `tauri build` 재실행하니 정상 통과. 재발하면 Defender 가 NSIS 를 오탐하는지 확인(NSIS 는 설치 제작 도구라 흔히 오탐) |
+| 데스크톱 앱 릴리스 빌드가 **7~15분** | `Cargo.toml` 릴리스 프로파일에 `lto=true`·`codegen-units=1`·`opt-level="s"` 를 줘 용량을 줄인 대가. 개발 중엔 `npm run desktop:dev`(디버그 프로파일) 를 쓸 것 |
 
 ---
 
 ## 6. 남아 있는 것 / 미완성 (동작엔 문제 없음)
 
-- **⚠️ 확인 대기 (에뮬레이터에서 눈으로)**:
-  - ① **상단 바 상태표시줄 겹침 수정**(`env(safe-area-inset-*)`)이 **안드로이드 Capacitor 웹뷰에서 실제로 먹는지** — 에뮬 재실행 → 앱 리로드로 확인. env() 가 0 이면 안 밀림 → `@capacitor/status-bar` 플러그인으로 `overlaysWebView:false`(네이티브 재빌드 필요). iOS/PWA 에선 표준대로 동작.
-  - ② **모바일 묶기 모드·그룹 추가** 실제 폰 조작감(코드 E2E 는 통과).
-  - 방법: adb 로 `install -r android/app/build/outputs/apk/debug/app-debug.apk` → `am start -n app.linkscape/.MainActivity` → `exec-out screencap -p` 로 캡처. (앱은 `server.url`→Vercel 이라 푸시 후 배포되면 반영)
+- **⚠️ 확인 대기 (사용자가 직접 눈으로)**:
+  - ① **데스크톱 클립보드 담기 실동작** — 앱을 켜고 링크를 복사한 뒤 `Ctrl+Shift+V` → "링크를 보드에 담았어요" 알림이 뜨고 보드에 카드가 생기는지. **전역 단축키는 실제 키 입력이 필요해 헤드리스로 검증 불가**(단축키 점유 자체는 검증됨). 안 되면 볼 곳: 로그인 세션 유무, `/share` 응답, `src-tauri/src/lib.rs` 의 폴링 판정 조건.
+  - ② **상단 바 상태표시줄 겹침 수정**(`env(safe-area-inset-*)`)이 **안드로이드 Capacitor 웹뷰에서 실제로 먹는지** — 에뮬 재실행 → 앱 리로드로 확인. env() 가 0 이면 안 밀림 → `@capacitor/status-bar` 플러그인으로 `overlaysWebView:false`(네이티브 재빌드 필요). iOS/PWA 에선 표준대로 동작.
+  - ③ **모바일 묶기 모드·그룹 추가** 실제 폰 조작감(코드 E2E 는 통과).
+  - 안드로이드 방법: adb 로 `install -r android/app/build/outputs/apk/debug/app-debug.apk` → `am start -n app.linkscape/.MainActivity` → `exec-out screencap -p` 로 캡처. (앱은 `server.url`→Vercel 이라 푸시 후 배포되면 반영)
+- **데스크톱 앱에 아직 없는 것**(요청 범위 밖이라 안 만듦): Windows 시작 시 자동 실행, 파일 드래그해서 담기, 자동 업데이트, 코드 서명(설치 시 SmartScreen 경고가 뜬다). 자동 시작은 `tauri-plugin-autostart` 로 몇 줄이면 붙는다.
+- 데스크톱은 **원격 URL 하이브리드**라 인터넷이 없으면 폴백 화면만 뜬다(오프라인 사용 불가). `app-plan.md` P1 정적 번들이 그 전제.
 - 확장이 담는 순간엔 링크가 여전히 **OG 메타 없음**(호스트명+파비콘만) — `/api/unfurl` 은 쿠키 세션 기반이라 확장에서 못 씀. **웹에서 보드를 열면 `useLinkBackfill` 이 채운다**(이번 세션 구현). 확장 팝업 자체 목록엔 여전히 호스트명만 보일 수 있음
 - 태그 입력 UI 제거됨(사용자 요청). 필터바 코드·DB 스키마는 남아 있음
 - Next 16 `middleware.ts` deprecation 경고(동작 무관, 방치)
@@ -249,14 +287,21 @@ app-plan.md                   ★ 앱화(모바일) 계획·진행 상태 (PWA·
   - dev 서버가 port 3000 에 남아 있거나 전 페이지 404(Turbopack+OneDrive 글리치)면 서버 껐다 켜기
 - **확장 설치**: `whale://extensions` → 개발자 모드 → 압축해제 → `whale-extension/`. 코드 수정 후 새로고침(⟳)
 - **앱(Capacitor) 빌드**: `npm run cap:sync`(웹 변경 반영) → `npm run cap:android`(Studio 열기) → 에뮬레이터 Run. CLI 빌드: `android/` 에서 `JAVA_HOME`=Studio JBR(`C:\Program Files\Android\Android Studio\jbr`) 로 `.\gradlew.bat assembleDebug`. Android SDK=`%LOCALAPPDATA%\Android\Sdk`(`android/local.properties` 에 sdk.dir). **iOS 는 Mac 필요**. 상세는 `app-plan.md`
+- **데스크톱(Tauri) 빌드**: `npm run desktop:dev`(빠른 디버그 실행) / `npm run desktop:build`(릴리스 + NSIS 설치파일, **7~15분**).
+  - 요구사항: **Rust**(rustup, 설치됨) + **WebView2**(Win11 내장, 확인됨) + **VS 2022 C++ 빌드도구**(설치됨). `cargo` 가 PATH 에 없으면 `$env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"`.
+  - 산출물: 실행파일 `src-tauri/target/release/linkscape-desktop.exe`(3.43MB), 설치파일 `src-tauri/target/release/bundle/nsis/LinkScape_0.1.0_x64-setup.exe`(1.26MB).
+  - 설치 시 **SmartScreen 경고**가 뜬다(코드 서명 안 함) — "추가 정보 → 실행"으로 진행.
+  - 웹만 고쳤다면 데스크톱은 **재빌드 불필요**(원격 URL 로드라 Vercel 배포만 되면 반영).
 
 ---
 
 ## 8. 다음 채팅에서 가장 먼저 할 일
 
-0. **워킹 트리 깨끗함** — 파일 업로드/뷰어·PWA·Capacitor·이번 UI 다듬기(메뉴 불투명)까지 전부 커밋·푸시 완료. 미추적 `plan1.md`·`chrome-store-listing.skill`·`android/local.properties`·빌드 산출물은 커밋 대상 아님(스크래치/gitignore). 한글 커밋은 `git commit -F`.
-1. **사용자 피드백 대기 상태** — 최근 흐름은 "실사용하며 UI/UX 다듬기". 새 요청이 오면 9번 규칙 안에서 바로 구현.
-2. 앱화 진행은 `app-plan.md` 로드맵(P1 정적 번들 → 네이티브 공유 → iOS/스토어). 그 외 개선 후보:
+0. **워킹 트리 깨끗함** — 웹·확장·모바일·데스크톱 전부 커밋·푸시 완료. 미추적 `plan1.md`·`chrome-store-listing.skill`·`android/local.properties`·`src-tauri/target`·`src-tauri/gen`·`src-tauri/icon-source.png` 은 커밋 대상 아님(스크래치/gitignore). 한글 커밋은 `git commit -F`.
+1. **데스크톱 클립보드 담기를 사용자가 눈으로 확인**(§6 확인 대기 ①) — 안 되면 그 피드백부터 처리.
+2. **사용자 피드백 대기 상태** — 최근 흐름은 "실사용하며 UI/UX 다듬기". 새 요청이 오면 9번 규칙 안에서 바로 구현.
+3. 앱화 진행은 `app-plan.md` 로드맵(P1 정적 번들 → 네이티브 공유 → iOS/스토어). 그 외 개선 후보:
+   - 데스크톱: 자동 시작(`tauri-plugin-autostart`), 트레이로 파일 드래그해 담기, 자동 업데이트
    - 목록 보기(웹·확장) 정렬 기준 선택(색/최근/이름) · 보드 접기
    - 파일 뷰어 대안(한글 미리보기), 태그/AI 자동 분류(만든 적 없음)
 3. 검증은 반드시 헤드리스 E2E 로 실동작 확인. 커밋 전 4종(9번 마지막) 필수.
@@ -298,8 +343,24 @@ app-plan.md                   ★ 앱화(모바일) 계획·진행 상태 (PWA·
 - `rest()` 빈 201 처리 유지. 이미지 다운로드는 CORS 때문에 반드시 background 에서
 - 목록/검색은 **전 보드 조회 + board_id 포함**(RLS 가 한정). 새 카드 배치 = "가장 최근 카드 + 32px 계단식"
 
+### 데스크톱 (src-tauri)
+- **웹 코드를 데스크톱 때문에 고치지 않는다.** 네이티브가 필요한 건 전부 `src/lib.rs` 에서 해결하고, 담기는 웹의 `/share` 를 재사용한다 — 담기 규칙이 갈라지지 않게.
+- **`capabilities/default.json` 에 `remote` 를 추가하지 말 것.** 추가하는 순간 원격 페이지가 Tauri IPC(클립보드·파일시스템 등)를 호출할 수 있게 된다. 지금은 의도적으로 닫혀 있다.
+- 담기 결과는 **추정하지 말고 실제 이동 주소로 판정**한다(낙관적 "담았습니다" 금지).
+- 릴리스 프로파일(`lto`·`codegen-units=1`)은 용량을 위한 것 — 빌드가 느려도 유지. 개발은 `desktop:dev`.
+- 웹만 바뀌면 데스크톱 재빌드 불필요(원격 URL). `BASE_URL` 을 바꿀 땐 `tauri.conf.json` 의 창 `url` 도 같이.
+
 ### 코드·커밋
 - Tailwind 클래스 동적 조립 금지 / effect 안 동기 setState 금지(React 19 lint — 렌더 중 조정 패턴)
 - **커밋 전 4종**: `npx tsc --noEmit` + `npx eslint src --max-warnings=0` + `npm run build` + **헤드리스 E2E 실동작 확인**
+  - 데스크톱(Rust)만 건드린 경우엔 4종 대신 `cargo check` + 실행 검증(트레이·단축키·창닫기)으로 대체한다 — 웹 코드가 안 바뀌므로.
+
+---
+
+## 변경 이력
+
+- 2026-07-21: **Windows 데스크톱 앱 신규**(Tauri v2 — 트레이 상주·전역 단축키 Ctrl+Shift+V 로 클립보드 담기·창닫기=숨김, 실행파일 3.43MB/설치파일 1.26MB). 뷰어 Esc·뒤로가기 닫기 수정, 뷰어 중 캔버스 단축키 차단, 확장 새 아이콘·목록 행 정리(이름수정·중앙정렬·긴 제목 말줄임), 그리기=캔버스 잉크, 오버레이 Ctrl+휠 캔버스 줌, 그룹 유동 크기+겹침 방지, 프레임 불투명 배경, 팝업 메뉴 불투명(`.glass-solid`). 문서 구조 섹션의 깨진 줄바꿈 복구.
+- 2026-07-20: 한글 뷰어(hwp.js), 확장 드롭존, 15일 자동 휴지통 정리, 상태표시줄 안전영역, 그룹 추가/모바일 묶기 모드. `HANDOFF.md` → `HANDOVER.md` 로 이름 변경.
+- 2026-07-19: PWA 베이스라인(manifest·SW·`/share`) + Capacitor 안드로이드 프로젝트, `app-plan.md` 작성.
 </content>
 </invoke>
