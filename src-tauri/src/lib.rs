@@ -3,8 +3,14 @@
 //! 전략은 Capacitor 안드로이드와 같다 — **원격 URL 하이브리드**.
 //! 웹 본체(Vercel)를 WebView2 로 그대로 띄우고, 네이티브가 얹는 것만 담당한다:
 //!   · 시스템 트레이 상주 (창을 닫아도 종료되지 않음)
-//!   · 전역 단축키 → 클립보드의 링크를 보드에 담기
+//!   · 트레이 메뉴에서 클립보드의 링크를 보드에 담기
 //! `app-plan.md` 의 P1(정적 번들)이 끝나면 `BASE_URL` 을 로컬 번들로 바꾸면 된다.
+//!
+//! **메모리**: WebView2(크로미움 엔진)는 창이 떠 있는 동안만 무겁다(~150MB+).
+//! 그래서 창을 닫으면 **숨기지 않고 파괴**해 WebView2 를 통째로 해제하고, 트레이
+//! 상주 중에는 가벼운 Rust 호스트만 남긴다(창 없이도 살아 있도록 ExitRequested 를
+//! prevent_exit). 다시 열 땐 창을 새로 만들어 페이지를 로드한다 — 세션은 WebView2
+//! 데이터 폴더에 남아 재로그인은 없다.
 //!
 //! 담기는 **웹의 기존 `/share` 경로를 그대로 재사용**한다(PWA share_target 착지점).
 //! 덕분에 담는 규칙(보드 확보·계단식 좌표·OG 백필)이 웹/확장/모바일과 한 곳에 유지된다.
@@ -14,16 +20,19 @@ use std::time::Duration;
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager, WebviewUrl, WebviewWindowBuilder, WindowEvent,
+    AppHandle, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder,
 };
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_notification::NotificationExt;
 
 /// 웹 본체. 배포 주소는 옛 이름 그대로다(HANDOVER §7).
 const BASE_URL: &str = "https://pdflinkin.vercel.app";
-/// 담기 전용 숨은 창의 라벨 — 보드 창(main)을 건드리지 않으려고 따로 둔다.
+/// 보드 창 라벨 — 닫으면 파괴되고, 트레이에서 다시 만든다.
+const MAIN_LABEL: &str = "main";
+/// 담기 전용 숨은 창의 라벨 — 보드 창을 건드리지 않으려고 따로 둔다.
 const CAPTURE_LABEL: &str = "capture";
-const SHORTCUT: &str = "CmdOrCtrl+Shift+V";
+const WIN_W: f64 = 1280.0;
+const WIN_H: f64 = 860.0;
 /// 담기 결과 판정 폴링 (400ms × 40 = 최대 16초)
 const POLL_INTERVAL_MS: u64 = 400;
 const POLL_TRIES: u32 = 40;
@@ -37,11 +46,28 @@ fn notify(app: &AppHandle, body: &str) {
         .show();
 }
 
-fn show_main(app: &AppHandle) {
-    if let Some(window) = app.get_webview_window("main") {
+/// 보드 창을 새로 만든다(트레이 상주 중 파괴돼 있을 때). tauri.conf.json 의
+/// 시작 창과 같은 크기/주소 — 여기 값이 바뀌면 conf 도 같이 맞출 것.
+fn build_main_window(app: &AppHandle) {
+    let Ok(url) = format!("{BASE_URL}/board").parse() else {
+        return;
+    };
+    let _ = WebviewWindowBuilder::new(app, MAIN_LABEL, WebviewUrl::External(url))
+        .title("LinkScape")
+        .inner_size(WIN_W, WIN_H)
+        .min_inner_size(520.0, 480.0)
+        .center()
+        .build();
+}
+
+/// 보드 창을 앞으로 — 살아 있으면 보이기, 파괴돼 있으면 새로 만든다.
+fn open_main(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window(MAIN_LABEL) {
         let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
+    } else {
+        build_main_window(app);
     }
 }
 
@@ -100,7 +126,7 @@ fn capture_clipboard(app: &AppHandle) {
             if path.starts_with("/login") {
                 let _ = window.destroy();
                 notify(&handle, "먼저 로그인해 주세요.");
-                show_main(&handle);
+                open_main(&handle);
                 return;
             }
         }
@@ -114,33 +140,16 @@ fn capture_clipboard(app: &AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default()
+    tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_notification::init());
-
-    #[cfg(desktop)]
-    {
-        use tauri_plugin_global_shortcut::ShortcutState;
-        builder = builder.plugin(
-            tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(|app, _shortcut, event| {
-                    // 눌림에만 반응 — 떼는 순간까지 처리하면 두 번 담긴다
-                    if event.state() == ShortcutState::Pressed {
-                        capture_clipboard(app);
-                    }
-                })
-                .build(),
-        );
-    }
-
-    builder
+        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             let open_item =
                 MenuItem::with_id(app, "open", "보드 열기", true, None::<&str>)?;
             let capture_item = MenuItem::with_id(
                 app,
                 "capture",
-                "클립보드에서 담기  (Ctrl+Shift+V)",
+                "클립보드에서 담기",
                 true,
                 None::<&str>,
             )?;
@@ -152,12 +161,12 @@ pub fn run() {
             )?;
 
             let mut tray = TrayIconBuilder::new()
-                .tooltip("LinkScape — 클립보드 담기 Ctrl+Shift+V")
+                .tooltip("LinkScape")
                 .menu(&menu)
                 // 왼쪽 클릭은 창 열기, 메뉴는 오른쪽 클릭으로 (윈도우 트레이 관행)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id().as_ref() {
-                    "open" => show_main(app),
+                    "open" => open_main(app),
                     "capture" => capture_clipboard(app),
                     "quit" => app.exit(0),
                     _ => {}
@@ -169,7 +178,7 @@ pub fn run() {
                         ..
                     } = event
                     {
-                        show_main(tray.app_handle());
+                        open_main(tray.app_handle());
                     }
                 });
 
@@ -178,26 +187,15 @@ pub fn run() {
             }
             tray.build(app)?;
 
-            #[cfg(desktop)]
-            {
-                use tauri_plugin_global_shortcut::GlobalShortcutExt;
-                if let Err(err) = app.global_shortcut().register(SHORTCUT) {
-                    // 다른 앱이 선점했을 수 있다 — 앱은 계속 뜬다(트레이 메뉴로 담기 가능)
-                    eprintln!("[linkscape] 전역 단축키({SHORTCUT}) 등록 실패: {err}");
-                }
-            }
-
             Ok(())
         })
-        .on_window_event(|window, event| {
-            // 보드 창의 X 는 종료가 아니라 트레이로 숨기기
-            if let WindowEvent::CloseRequested { api, .. } = event {
-                if window.label() == "main" {
-                    api.prevent_close();
-                    let _ = window.hide();
-                }
+        .build(tauri::generate_context!())
+        .expect("LinkScape 데스크톱 실행 실패")
+        // 트레이 상주 앱 — 창을 모두 닫아도(=파괴돼 WebView2 메모리 해제) 프로세스는
+        // 살려 둔다. 종료는 오직 트레이 메뉴 "종료"(app.exit)로만.
+        .run(|_app, event| {
+            if let RunEvent::ExitRequested { api, .. } = event {
+                api.prevent_exit();
             }
-        })
-        .run(tauri::generate_context!())
-        .expect("LinkScape 데스크톱 실행 실패");
+        });
 }
